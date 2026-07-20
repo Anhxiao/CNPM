@@ -1,0 +1,47 @@
+openapi: 3.0.0
+
+info:
+  title: Project Management API
+  version: 1.0.0
+  description: API Documentation
+
+servers:
+  - url: http://localhost:5000/api
+
+paths:
+
+  /auth/login:
+
+    post:
+
+      summary: Đăng nhập
+
+      tags:
+
+        - Authentication
+
+      requestBody:
+
+        required: true
+
+      responses:
+
+        "200":
+
+          description: Login Success
+
+  /auth/register:
+
+    post:
+
+      summary: Đăng ký tài khoản
+
+      tags:
+
+        - Authentication
+
+      responses:
+
+        "201":
+
+          description: Register Success

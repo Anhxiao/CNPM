@@ -1,0 +1,87 @@
+@media (max-width:1200px){
+
+    .dashboard-cards{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .statistics-summary{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+@media (max-width:992px){
+
+    .app-layout{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        width:100%;
+        min-height:auto;
+    }
+
+    .dashboard-content,
+    .task-detail,
+    .profile-content{
+        grid-template-columns:1fr;
+    }
+
+    .grid-4,
+    .grid-3,
+    .grid-2{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media (max-width:768px){
+
+    .navbar{
+        flex-direction:column;
+        height:auto;
+        gap:15px;
+        padding:20px;
+    }
+
+    .navbar-search input{
+        width:100%;
+    }
+
+    .dashboard-cards{
+        grid-template-columns:1fr;
+    }
+
+    .statistics-grid{
+        grid-template-columns:1fr;
+    }
+
+    .project-list{
+        grid-template-columns:1fr;
+    }
+
+    .calendar-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+@media (max-width:576px){
+
+    .page-content{
+        padding:15px;
+    }
+
+    .auth-card{
+        padding:25px;
+    }
+
+    .calendar-grid{
+        grid-template-columns:1fr;
+    }
+
+    .table-responsive{
+        overflow-x:auto;
+    }
+
+}

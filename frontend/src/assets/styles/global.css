@@ -1,0 +1,25 @@
+body{
+
+    background:var(--background-color);
+
+    color:var(--text-color);
+
+}
+
+.container{
+
+    width:100%;
+
+    max-width:1400px;
+
+    margin:auto;
+
+    padding:20px;
+
+}
+
+img{
+
+    max-width:100%;
+
+}
