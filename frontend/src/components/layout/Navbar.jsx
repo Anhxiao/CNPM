@@ -1,56 +1,133 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const Navbar = () => {
 
+    const navigate = useNavigate();
+
+    const { user, logout } = useAuthContext();
+
+    const handleLogout = () => {
+
+        logout();
+
+        navigate("/login", {
+
+            replace: true
+
+        });
+
+    };
+
+    const handleProfile = () => {
+
+        navigate("/profile");
+
+    };
+
     return (
 
-        <nav className="navbar">
+        <header className="navbar">
 
-            <div className="navbar-logo">
+            <div className="navbar-left">
 
-                <Link to="/dashboard">
+                <h2 className="navbar-title">
 
-                    Project Management
+                    Personal Project Management
 
-                </Link>
-
-            </div>
-
-            <div className="navbar-menu">
-
-                <Link to="/dashboard">
-
-                    Dashboard
-
-                </Link>
-
-                <Link to="/projects">
-
-                    Projects
-
-                </Link>
-
-                <Link to="/tasks">
-
-                    Tasks
-
-                </Link>
-
-                <Link to="/statistics">
-
-                    Statistics
-
-                </Link>
-
-                <Link to="/profile">
-
-                    Profile
-
-                </Link>
+                </h2>
 
             </div>
 
-        </nav>
+            <div className="navbar-right">
+
+                <div
+                    className="navbar-icon"
+                    title="Thông báo"
+                    onClick={() => navigate("/notifications")}
+                >
+
+                    🔔
+
+                </div>
+
+                <div className="user-box">
+
+                    <img
+
+                        src={
+                            user?.avatar
+                                ? user.avatar
+                                : "/default-avatar.png"
+                        }
+
+                        alt="Avatar"
+
+                        className="user-avatar"
+
+                    />
+
+                    <div>
+
+                        <div className="user-name">
+
+                            {
+
+                                user?.fullName ||
+
+                                "Người dùng"
+
+                            }
+
+                        </div>
+
+                        <div className="user-role">
+
+                            {
+
+                                user?.role ||
+
+                                "User"
+
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <button
+
+                    type="button"
+
+                    className="btn btn-primary"
+
+                    onClick={handleProfile}
+
+                >
+
+                    Hồ sơ
+
+                </button>
+
+                <button
+
+                    type="button"
+
+                    className="btn btn-danger"
+
+                    onClick={handleLogout}
+
+                >
+
+                    Đăng xuất
+
+                </button>
+
+            </div>
+
+        </header>
 
     );
 

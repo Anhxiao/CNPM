@@ -3,28 +3,36 @@ import ProjectRepository from "../repositories/ProjectRepository.js";
 
 class TaskService {
 
-    /**
-     * Kiểm tra Project có tồn tại
-     * và User có quyền thao tác hay không
-     */
     async checkProject(projectId, userId) {
 
-        const project = await ProjectRepository.findById(projectId);
+        const project = await ProjectRepository.findById(
+            projectId
+        );
 
         if (!project) {
-            throw new Error("Dự án không tồn tại.");
+            throw new Error(
+                "Dự án không tồn tại."
+            );
         }
 
-        if (project.owner.toString() !== userId) {
-            throw new Error("Bạn không có quyền thao tác dự án này.");
+        if (project.isDeleted) {
+            throw new Error(
+                "Dự án đã bị xóa."
+            );
+        }
+
+        if (
+            !project.owner ||
+            project.owner.toString() !== userId.toString()
+        ) {
+            throw new Error(
+                "Bạn không có quyền thao tác với dự án này."
+            );
         }
 
         return project;
     }
 
-    /**
-     * Tính tiến độ Task theo Status
-     */
     calculateProgress(status) {
 
         switch (status) {
@@ -46,187 +54,306 @@ class TaskService {
 
             default:
                 return 0;
-
         }
-
     }
 
-    /**
-     * Tạo Task
-     */
     async createTask(userId, taskData) {
+
+        if (!taskData.project) {
+            throw new Error(
+                "Công việc phải thuộc một dự án."
+            );
+        }
 
         await this.checkProject(
             taskData.project,
             userId
         );
 
-        taskData.creator = userId;
+        const task = {
+            ...taskData,
+            creator: userId
+        };
 
-        const task = await TaskRepository.create(taskData);
+        task.progress = this.calculateProgress(
+            task.status || "Todo"
+        );
 
-        await this.updateProjectProgress(taskData.project);
-
-        return task;
-
-    }
-
-    /**
-     * Danh sách Task
-     */
-    async getTasks(filters) {
-
-        return await TaskRepository.findAll(filters);
-
-    }
-
-    /**
-     * Chi tiết Task
-     */
-    async getTaskById(taskId) {
-
-        const task = await TaskRepository.findById(taskId);
-
-        if (!task) {
-            throw new Error("Không tìm thấy công việc.");
+        if (task.status === "Completed") {
+            task.completedAt = new Date();
+        } else {
+            task.completedAt = null;
         }
 
-        return task;
+        const createdTask =
+            await TaskRepository.create(task);
 
+        await this.updateProjectProgress(
+            task.project
+        );
+
+        return createdTask;
     }
 
-    /**
-     * Cập nhật Task
-     */
-    async updateTask(taskId, userId, data) {
+    async getTasks(userId, filters = {}) {
 
-        const task = await this.getTaskById(taskId);
+        const result = await TaskRepository.findAll(
+            filters
+        );
+
+        const tasks = result?.tasks || result || [];
+
+        const userTasks = [];
+
+        for (const task of tasks) {
+
+            if (!task.project) {
+                continue;
+            }
+
+            const projectId =
+                task.project._id || task.project;
+
+            try {
+
+                await this.checkProject(
+                    projectId,
+                    userId
+                );
+
+                userTasks.push(task);
+
+            } catch (error) {
+
+                continue;
+            }
+        }
+
+        if (result?.tasks) {
+
+            return {
+                ...result,
+                tasks: userTasks,
+                total: userTasks.length
+            };
+
+        }
+
+        return userTasks;
+    }
+
+    async getTaskById(taskId, userId) {
+
+        const task =
+            await TaskRepository.findById(taskId);
+
+        if (!task) {
+            throw new Error(
+                "Không tìm thấy công việc."
+            );
+        }
+
+        if (task.isDeleted) {
+            throw new Error(
+                "Công việc đã bị xóa."
+            );
+        }
+
+        const projectId =
+            task.project?._id || task.project;
 
         await this.checkProject(
-            task.project._id,
+            projectId,
             userId
         );
 
+        return task;
+    }
+
+    async updateTask(taskId, userId, data) {
+
+        const task =
+            await TaskRepository.findById(taskId);
+
+        if (!task) {
+            throw new Error(
+                "Không tìm thấy công việc."
+            );
+        }
+
+        const projectId =
+            task.project?._id || task.project;
+
+        await this.checkProject(
+            projectId,
+            userId
+        );
+
+        delete data.creator;
+        delete data.project;
+
         if (data.status) {
 
-            data.progress = this.calculateProgress(
-                data.status
-            );
+            data.progress =
+                this.calculateProgress(
+                    data.status
+                );
 
-            if (data.status === "Completed") {
+            if (
+                data.status === "Completed"
+            ) {
 
-                data.completedAt = new Date();
+                data.completedAt =
+                    new Date();
 
             } else {
 
                 data.completedAt = null;
-
             }
-
         }
 
-        const updatedTask = await TaskRepository.update(
-            taskId,
-            data
-        );
+        const updatedTask =
+            await TaskRepository.update(
+                taskId,
+                data
+            );
 
         await this.updateProjectProgress(
-            task.project._id
+            projectId
         );
 
         return updatedTask;
-
     }
 
-    /**
-     * Xóa mềm Task
-     */
     async deleteTask(taskId, userId) {
 
-        const task = await this.getTaskById(taskId);
+        const task =
+            await TaskRepository.findById(taskId);
+
+        if (!task) {
+            throw new Error(
+                "Không tìm thấy công việc."
+            );
+        }
+
+        const projectId =
+            task.project?._id || task.project;
 
         await this.checkProject(
-            task.project._id,
+            projectId,
             userId
         );
 
-        const deletedTask = await TaskRepository.delete(taskId);
+        const deletedTask =
+            await TaskRepository.delete(
+                taskId
+            );
 
         await this.updateProjectProgress(
-            task.project._id
+            projectId
         );
 
         return deletedTask;
-
     }
 
-    /**
-     * Khôi phục Task
-     */
     async restoreTask(taskId, userId) {
 
-        const task = await this.getTaskById(taskId);
+        const task =
+            await TaskRepository.findById(taskId);
+
+        if (!task) {
+            throw new Error(
+                "Không tìm thấy công việc."
+            );
+        }
+
+        const projectId =
+            task.project?._id || task.project;
 
         await this.checkProject(
-            task.project._id,
+            projectId,
             userId
         );
 
-        const restoredTask = await TaskRepository.restore(taskId);
+        const restoredTask =
+            await TaskRepository.restore(
+                taskId
+            );
 
         await this.updateProjectProgress(
-            task.project._id
+            projectId
         );
 
         return restoredTask;
-
     }
 
-    /**
-     * Cập nhật Progress của Project
-     */
     async updateProjectProgress(projectId) {
 
-        const result = await TaskRepository.findAll({
-
-            projectId
-
-        });
-
-        const tasks = result.tasks;
-
-        if (!tasks || tasks.length === 0) {
-
-            await ProjectRepository.update(projectId, {
-
-                progress: 0
-
+        const result =
+            await TaskRepository.findAll({
+                projectId
             });
 
-            return;
+        const tasks =
+            result?.tasks || result || [];
 
+        if (
+            !tasks ||
+            tasks.length === 0
+        ) {
+
+            await ProjectRepository.update(
+                projectId,
+                {
+                    progress: 0
+                }
+            );
+
+            return 0;
         }
 
-        const completedTasks = tasks.filter(
+        const activeTasks =
+            tasks.filter(
+                task => !task.isDeleted
+            );
 
-            task => task.status === "Completed"
+        if (
+            activeTasks.length === 0
+        ) {
 
-        ).length;
+            await ProjectRepository.update(
+                projectId,
+                {
+                    progress: 0
+                }
+            );
 
-        const progress = Math.round(
+            return 0;
+        }
 
-            (completedTasks / tasks.length) * 100
+        const completedTasks =
+            activeTasks.filter(
+                task =>
+                    task.status === "Completed"
+            ).length;
 
+        const progress =
+            Math.round(
+                (
+                    completedTasks /
+                    activeTasks.length
+                ) * 100
+            );
+
+        await ProjectRepository.update(
+            projectId,
+            {
+                progress
+            }
         );
 
-        await ProjectRepository.update(projectId, {
-
-            progress
-
-        });
-
+        return progress;
     }
-
 }
 
 export default new TaskService();

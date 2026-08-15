@@ -1,96 +1,80 @@
-import express from "express";
+import mongoose from "mongoose";
 
-import UserController from "../controllers/UserController.js";
+const projectSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: [true, "Tên dự án là bắt buộc."],
+            trim: true,
+            maxlength: 100
+        },
 
-import authMiddleware from "../middlewares/authMiddleware.js";
+        description: {
+            type: String,
+            trim: true,
+            default: ""
+        },
 
-import roleMiddleware from "../middlewares/roleMiddleware.js";
+        owner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true
+        },
 
-import validationMiddleware from "../middlewares/validationMiddleware.js";
+        status: {
+            type: String,
+            enum: [
+                "Planning",
+                "In Progress",
+                "Completed"
+            ],
+            default: "Planning"
+        },
 
-import {
-    updateUserValidation,
-    changePasswordValidation
-} from "../validations/user.validation.js";
+        startDate: {
+            type: Date,
+            default: null
+        },
 
-const router = express.Router();
+        endDate: {
+            type: Date,
+            default: null
+        },
 
-/*
-----------------------------------
-Lấy danh sách User
-----------------------------------
-*/
+        progress: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
 
-router.get(
-    "/",
-    authMiddleware,
-    roleMiddleware("admin"),
-    UserController.getAllUsers
+        color: {
+            type: String,
+            default: "#0d6efd",
+            trim: true
+        },
+
+        isDeleted: {
+            type: Boolean,
+            default: false,
+            index: true
+        }
+    },
+    {
+        timestamps: true,
+        versionKey: false
+    }
 );
 
-/*
-----------------------------------
-Lấy User theo ID
-----------------------------------
-*/
+projectSchema.index({
+    owner: 1,
+    isDeleted: 1
+});
 
-router.get(
-    "/:id",
-    authMiddleware,
-    UserController.getUserById
+const Project = mongoose.model(
+    "Project",
+    projectSchema
 );
 
-/*
-----------------------------------
-Cập nhật User
-----------------------------------
-*/
-
-router.put(
-    "/:id",
-    authMiddleware,
-    updateUserValidation,
-    validationMiddleware,
-    UserController.updateUser
-);
-
-/*
-----------------------------------
-Đổi mật khẩu
-----------------------------------
-*/
-
-router.put(
-    "/change-password",
-    authMiddleware,
-    changePasswordValidation,
-    validationMiddleware,
-    UserController.changePassword
-);
-
-/*
-----------------------------------
-Cập nhật Avatar
-----------------------------------
-*/
-
-router.put(
-    "/avatar",
-    authMiddleware,
-    UserController.updateAvatar
-);
-
-/*
-----------------------------------
-Xóa User
-----------------------------------
-*/
-
-router.delete(
-    "/:id",
-    authMiddleware,
-    roleMiddleware("admin"),
-    UserController.deleteUser
-);
-
-export default router;
+export default Project;

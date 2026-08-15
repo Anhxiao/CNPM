@@ -1,423 +1,366 @@
 import { useEffect, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 
 import projectService from "../../services/project.service";
-
 import taskService from "../../services/task.service";
 
 const CreateTask = () => {
-
     const navigate = useNavigate();
 
     const [projects, setProjects] = useState([]);
+    const [loadingProjects, setLoadingProjects] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
-
         title: "",
-
         description: "",
-
-        projectId: "",
-
+        project: "",
         priority: "Medium",
-
-        status: "Pending",
-
+        status: "Todo",
         startDate: "",
-
         dueDate: ""
-
     });
 
     useEffect(() => {
-
         loadProjects();
-
     }, []);
 
     const loadProjects = async () => {
-
         try {
+            setLoadingProjects(true);
 
             const response = await projectService.getProjects();
 
-            setProjects(response.data.data || []);
+            const responseData = response?.data;
 
-        }
+            let projectList = [];
 
-        catch (error) {
+            if (Array.isArray(responseData)) {
+                projectList = responseData;
+            } else if (Array.isArray(responseData?.data)) {
+                projectList = responseData.data;
+            } else if (Array.isArray(responseData?.projects)) {
+                projectList = responseData.projects;
+            }
+
+            setProjects(projectList);
+        } catch (error) {
+            console.error("Lỗi lấy danh sách Project:", error);
 
             alert(
-
-                error.response?.data?.message ||
-
-                "Không thể tải danh sách Project."
-
+                error?.response?.data?.message ||
+                "Không thể tải danh sách dự án."
             );
 
+            setProjects([]);
+        } finally {
+            setLoadingProjects(false);
         }
-
     };
 
     const handleChange = (event) => {
+        const { name, value } = event.target;
 
-        setFormData({
-
-            ...formData,
-
-            [event.target.name]: event.target.value
-
-        });
-
+        setFormData((previous) => ({
+            ...previous,
+            [name]: value
+        }));
     };
 
     const handleSubmit = async (event) => {
-
         event.preventDefault();
 
-        try {
-
-            await taskService.createTask(formData);
-
-            alert("Tạo Task thành công.");
-
-            navigate("/tasks");
-
+        if (!formData.title.trim()) {
+            alert("Vui lòng nhập tên công việc.");
+            return;
         }
 
-        catch (error) {
+        if (!formData.project) {
+            alert("Vui lòng chọn dự án.");
+            return;
+        }
+
+        if (
+            formData.startDate &&
+            formData.dueDate &&
+            formData.dueDate < formData.startDate
+        ) {
+            alert("Hạn hoàn thành phải lớn hơn hoặc bằng ngày bắt đầu.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const taskData = {
+                title: formData.title.trim(),
+                description: formData.description.trim(),
+                project: formData.project,
+                priority: formData.priority,
+                status: formData.status,
+                startDate: formData.startDate || undefined,
+                dueDate: formData.dueDate || undefined
+            };
+
+            await taskService.createTask(taskData);
+
+            alert("Tạo công việc thành công.");
+
+            navigate("/tasks", {
+                replace: true
+            });
+        } catch (error) {
+            console.error("Lỗi tạo Task:", error);
 
             alert(
-
-                error.response?.data?.message ||
-
-                "Không thể tạo Task."
-
+                error?.response?.data?.message ||
+                "Không thể tạo công việc."
             );
-
+        } finally {
+            setLoading(false);
         }
-
     };
 
     return (
+        <div className="container-fluid py-3">
+            <div className="row justify-content-center">
+                <div className="col-lg-8 col-xl-9">
+                    <div className="card shadow-sm border-0">
+                        <div className="card-header bg-white py-3">
+                            <h3 className="mb-0">
+                                Thêm công việc
+                            </h3>
 
-        <div className="container">
-
-            <div className="card">
-
-                <div className="card-header">
-
-                    <h3>
-
-                        Thêm Task
-
-                    </h3>
-
-                </div>
-
-                <div className="card-body">
-
-                    <form onSubmit={handleSubmit}>
-
-                        <div className="mb-3">
-
-                            <label className="form-label">
-
-                                Tên Task
-
-                            </label>
-
-                            <input
-
-                                type="text"
-
-                                name="title"
-
-                                className="form-control"
-
-                                value={formData.title}
-
-                                onChange={handleChange}
-
-                                required
-
-                            />
-
+                            <small className="text-muted">
+                                Công việc phải thuộc một dự án đã có.
+                            </small>
                         </div>
 
-                        <div className="mb-3">
+                        <div className="card-body p-4">
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-3">
+                                    <label
+                                        htmlFor="title"
+                                        className="form-label fw-semibold"
+                                    >
+                                        Tên công việc
+                                    </label>
 
-                            <label className="form-label">
+                                    <input
+                                        id="title"
+                                        type="text"
+                                        className="form-control"
+                                        name="title"
+                                        value={formData.title}
+                                        onChange={handleChange}
+                                        placeholder="Nhập tên công việc"
+                                        maxLength={200}
+                                        required
+                                    />
+                                </div>
 
-                                Mô tả
+                                <div className="mb-3">
+                                    <label
+                                        htmlFor="description"
+                                        className="form-label fw-semibold"
+                                    >
+                                        Mô tả
+                                    </label>
 
-                            </label>
+                                    <textarea
+                                        id="description"
+                                        className="form-control"
+                                        name="description"
+                                        rows="4"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        placeholder="Nhập mô tả công việc"
+                                    />
+                                </div>
 
-                            <textarea
+                                <div className="mb-3">
+                                    <label
+                                        htmlFor="project"
+                                        className="form-label fw-semibold"
+                                    >
+                                        Dự án
+                                    </label>
 
-                                name="description"
+                                    <select
+                                        id="project"
+                                        className="form-select"
+                                        name="project"
+                                        value={formData.project}
+                                        onChange={handleChange}
+                                        disabled={loadingProjects}
+                                        required
+                                    >
+                                        <option value="">
+                                            {loadingProjects
+                                                ? "Đang tải danh sách dự án..."
+                                                : "Chọn dự án"}
+                                        </option>
 
-                                className="form-control"
+                                        {projects.map((project) => (
+                                            <option
+                                                key={project._id}
+                                                value={project._id}
+                                            >
+                                                {project.name}
+                                            </option>
+                                        ))}
+                                    </select>
 
-                                rows="4"
+                                    {!loadingProjects &&
+                                        projects.length === 0 && (
+                                            <div className="form-text text-danger">
+                                                Chưa có dự án nào. Hãy tạo
+                                                dự án trước khi thêm công việc.
+                                            </div>
+                                        )}
+                                </div>
 
-                                value={formData.description}
-
-                                onChange={handleChange}
-
-                            />
-
-                        </div>
-
-                        <div className="mb-3">
-
-                            <label className="form-label">
-
-                                Project
-
-                            </label>
-
-                            <select
-
-                                name="projectId"
-
-                                className="form-select"
-
-                                value={formData.projectId}
-
-                                onChange={handleChange}
-
-                                required
-
-                            >
-
-                                <option value="">
-
-                                    Chọn Project
-
-                                </option>
-
-                                {
-
-                                    projects.map(project => (
-
-                                        <option
-
-                                            key={project._id}
-
-                                            value={project._id}
-
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label
+                                            htmlFor="priority"
+                                            className="form-label fw-semibold"
                                         >
+                                            Mức độ ưu tiên
+                                        </label>
 
-                                            {project.name}
+                                        <select
+                                            id="priority"
+                                            className="form-select"
+                                            name="priority"
+                                            value={formData.priority}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="Low">
+                                                Thấp
+                                            </option>
 
-                                        </option>
+                                            <option value="Medium">
+                                                Trung bình
+                                            </option>
 
-                                    ))
+                                            <option value="High">
+                                                Cao
+                                            </option>
 
-                                }
+                                            <option value="Urgent">
+                                                Khẩn cấp
+                                            </option>
+                                        </select>
+                                    </div>
 
-                            </select>
+                                    <div className="col-md-6 mb-3">
+                                        <label
+                                            htmlFor="status"
+                                            className="form-label fw-semibold"
+                                        >
+                                            Trạng thái
+                                        </label>
 
-                        </div>
+                                        <select
+                                            id="status"
+                                            className="form-select"
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="Todo">
+                                                Chưa thực hiện
+                                            </option>
 
-                        <div className="row">
+                                            <option value="In Progress">
+                                                Đang thực hiện
+                                            </option>
 
-                            <div className="col-md-6">
+                                            <option value="Review">
+                                                Đang kiểm tra
+                                            </option>
 
-                                <div className="mb-3">
+                                            <option value="Completed">
+                                                Hoàn thành
+                                            </option>
 
-                                    <label className="form-label">
+                                            <option value="Cancelled">
+                                                Đã hủy
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
 
-                                        Ưu tiên
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label
+                                            htmlFor="startDate"
+                                            className="form-label fw-semibold"
+                                        >
+                                            Ngày bắt đầu
+                                        </label>
 
-                                    </label>
+                                        <input
+                                            id="startDate"
+                                            type="date"
+                                            className="form-control"
+                                            name="startDate"
+                                            value={formData.startDate}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
 
-                                    <select
+                                    <div className="col-md-6 mb-3">
+                                        <label
+                                            htmlFor="dueDate"
+                                            className="form-label fw-semibold"
+                                        >
+                                            Hạn hoàn thành
+                                        </label>
 
-                                        name="priority"
+                                        <input
+                                            id="dueDate"
+                                            type="date"
+                                            className="form-control"
+                                            name="dueDate"
+                                            value={formData.dueDate}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                </div>
 
-                                        className="form-select"
-
-                                        value={formData.priority}
-
-                                        onChange={handleChange}
-
+                                <div className="d-flex justify-content-end gap-2 mt-4">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => navigate("/tasks")}
+                                        disabled={loading}
                                     >
+                                        Hủy
+                                    </button>
 
-                                        <option value="Low">
-
-                                            Low
-
-                                        </option>
-
-                                        <option value="Medium">
-
-                                            Medium
-
-                                        </option>
-
-                                        <option value="High">
-
-                                            High
-
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            </div>
-
-                            <div className="col-md-6">
-
-                                <div className="mb-3">
-
-                                    <label className="form-label">
-
-                                        Trạng thái
-
-                                    </label>
-
-                                    <select
-
-                                        name="status"
-
-                                        className="form-select"
-
-                                        value={formData.status}
-
-                                        onChange={handleChange}
-
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={
+                                            loading ||
+                                            loadingProjects ||
+                                            projects.length === 0
+                                        }
                                     >
-
-                                        <option value="Pending">
-
-                                            Pending
-
-                                        </option>
-
-                                        <option value="In Progress">
-
-                                            In Progress
-
-                                        </option>
-
-                                        <option value="Completed">
-
-                                            Completed
-
-                                        </option>
-
-                                    </select>
-
+                                        {loading
+                                            ? "Đang lưu..."
+                                            : "Lưu công việc"}
+                                    </button>
                                 </div>
-
-                            </div>
-
+                            </form>
                         </div>
-
-                        <div className="row">
-
-                            <div className="col-md-6">
-
-                                <div className="mb-3">
-
-                                    <label className="form-label">
-
-                                        Ngày bắt đầu
-
-                                    </label>
-
-                                    <input
-
-                                        type="date"
-
-                                        name="startDate"
-
-                                        className="form-control"
-
-                                        value={formData.startDate}
-
-                                        onChange={handleChange}
-
-                                    />
-
-                                </div>
-
-                            </div>
-
-                            <div className="col-md-6">
-
-                                <div className="mb-3">
-
-                                    <label className="form-label">
-
-                                        Hạn hoàn thành
-
-                                    </label>
-
-                                    <input
-
-                                        type="date"
-
-                                        name="dueDate"
-
-                                        className="form-control"
-
-                                        value={formData.dueDate}
-
-                                        onChange={handleChange}
-
-                                    />
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        <div className="d-flex gap-2">
-
-                            <button
-
-                                type="submit"
-
-                                className="btn btn-success"
-
-                            >
-
-                                Lưu
-
-                            </button>
-
-                            <button
-
-                                type="button"
-
-                                className="btn btn-secondary"
-
-                                onClick={() => navigate("/tasks")}
-
-                            >
-
-                                Hủy
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
+                    </div>
                 </div>
-
             </div>
-
         </div>
-
     );
-
 };
 
 export default CreateTask;

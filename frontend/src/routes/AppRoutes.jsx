@@ -7,6 +7,8 @@ import {
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 
+import MainLayout from "../layouts/MainLayout";
+
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
@@ -26,18 +28,17 @@ import TaskDetail from "../pages/task/TaskDetail";
 import Calendar from "../pages/task/Calendar";
 
 import Notification from "../pages/notification/Notification";
-
 import Statistics from "../pages/statistics/Statistics";
-
 import Profile from "../pages/profile/Profile";
-
 import Settings from "../pages/settings/Settings";
 
 const AppRoutes = () => {
+
     return (
+
         <Routes>
 
-            {/* Public Routes */}
+            {/* Public */}
 
             <Route element={<PublicRoute />}>
 
@@ -63,91 +64,100 @@ const AppRoutes = () => {
 
             </Route>
 
-            {/* Private Routes */}
+            {/* Private */}
 
             <Route element={<PrivateRoute />}>
 
-                <Route
-                    path="/"
-                    element={<Dashboard />}
-                />
+                <Route element={<MainLayout />}>
 
-                <Route
-                    path="/projects"
-                    element={<ProjectList />}
-                />
+                    <Route
+                        path="/"
+                        element={<Navigate to="/dashboard" replace />}
+                    />
 
-                <Route
-                    path="/projects/create"
-                    element={<CreateProject />}
-                />
+                    <Route
+                        path="/dashboard"
+                        element={<Dashboard />}
+                    />
 
-                <Route
-                    path="/projects/:id"
-                    element={<ProjectDetail />}
-                />
+                    <Route
+                        path="/projects"
+                        element={<ProjectList />}
+                    />
 
-                <Route
-                    path="/projects/edit/:id"
-                    element={<UpdateProject />}
-                />
+                    <Route
+                        path="/projects/create"
+                        element={<CreateProject />}
+                    />
 
-                <Route
-                    path="/tasks"
-                    element={<TaskList />}
-                />
+                    <Route
+                        path="/projects/:id"
+                        element={<ProjectDetail />}
+                    />
 
-                <Route
-                    path="/tasks/create"
-                    element={<CreateTask />}
-                />
+                    <Route
+                        path="/projects/edit/:id"
+                        element={<UpdateProject />}
+                    />
 
-                <Route
-                    path="/tasks/:id"
-                    element={<TaskDetail />}
-                />
+                    <Route
+                        path="/tasks"
+                        element={<TaskList />}
+                    />
 
-                <Route
-                    path="/tasks/edit/:id"
-                    element={<UpdateTask />}
-                />
+                    <Route
+                        path="/tasks/create"
+                        element={<CreateTask />}
+                    />
 
-                <Route
-                    path="/calendar"
-                    element={<Calendar />}
-                />
+                    <Route
+                        path="/tasks/:id"
+                        element={<TaskDetail />}
+                    />
 
-                <Route
-                    path="/notifications"
-                    element={<Notification />}
-                />
+                    <Route
+                        path="/tasks/edit/:id"
+                        element={<UpdateTask />}
+                    />
 
-                <Route
-                    path="/statistics"
-                    element={<Statistics />}
-                />
+                    <Route
+                        path="/calendar"
+                        element={<Calendar />}
+                    />
 
-                <Route
-                    path="/profile"
-                    element={<Profile />}
-                />
+                    <Route
+                        path="/notifications"
+                        element={<Notification />}
+                    />
 
-                <Route
-                    path="/settings"
-                    element={<Settings />}
-                />
+                    <Route
+                        path="/statistics"
+                        element={<Statistics />}
+                    />
+
+                    <Route
+                        path="/profile"
+                        element={<Profile />}
+                    />
+
+                    <Route
+                        path="/settings"
+                        element={<Settings />}
+                    />
+
+                </Route>
 
             </Route>
 
-            {/* Route không tồn tại */}
-
             <Route
                 path="*"
-                element={<Navigate to="/" replace />}
+                element={<Navigate to="/dashboard" replace />}
             />
 
         </Routes>
+
     );
+
 };
 
 export default AppRoutes;

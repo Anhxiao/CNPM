@@ -2,38 +2,38 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import authService from "../../services/auth.service";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const Login = () => {
 
     const navigate = useNavigate();
 
+    const { login } = useAuthContext();
+
     const [form, setForm] = useState({
-
         email: "",
-
         password: ""
-
     });
 
     const [loading, setLoading] = useState(false);
 
     const [error, setError] = useState("");
 
-    const handleChange = (e) => {
+    const handleChange = (event) => {
 
         setForm({
 
             ...form,
 
-            [e.target.name]: e.target.value
+            [event.target.name]: event.target.value
 
         });
 
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (event) => {
 
-        e.preventDefault();
+        event.preventDefault();
 
         setLoading(true);
 
@@ -41,19 +41,50 @@ const Login = () => {
 
         try {
 
-            await authService.login(form);
+            const response = await authService.login(form);
 
-            navigate("/dashboard");
+            const data = response.data?.data;
+
+            if (
+                !data ||
+                !data.user ||
+                !data.accessToken ||
+                !data.refreshToken
+            ) {
+
+                throw new Error("Dữ liệu đăng nhập không hợp lệ.");
+
+            }
+
+            login(
+
+                data.user,
+
+                data.accessToken,
+
+                data.refreshToken
+
+            );
+
+            navigate("/dashboard", {
+
+                replace: true
+
+            });
 
         }
 
         catch (err) {
 
+            console.error(err);
+
             setError(
 
                 err.response?.data?.message ||
 
-                "Đăng nhập thất bại"
+                err.message ||
+
+                "Đăng nhập thất bại."
 
             );
 
@@ -103,19 +134,25 @@ const Login = () => {
 
                                 <div className="mb-3">
 
-                                    <label>Email</label>
+                                    <label className="form-label">
+
+                                        Email
+
+                                    </label>
 
                                     <input
+
+                                        type="email"
 
                                         className="form-control"
 
                                         name="email"
 
-                                        type="email"
-
                                         value={form.email}
 
                                         onChange={handleChange}
+
+                                        placeholder="Nhập email"
 
                                         required
 
@@ -125,19 +162,25 @@ const Login = () => {
 
                                 <div className="mb-3">
 
-                                    <label>Mật khẩu</label>
+                                    <label className="form-label">
+
+                                        Mật khẩu
+
+                                    </label>
 
                                     <input
+
+                                        type="password"
 
                                         className="form-control"
 
                                         name="password"
 
-                                        type="password"
-
                                         value={form.password}
 
                                         onChange={handleChange}
+
+                                        placeholder="Nhập mật khẩu"
 
                                         required
 
@@ -146,6 +189,8 @@ const Login = () => {
                                 </div>
 
                                 <button
+
+                                    type="submit"
 
                                     className="btn btn-primary w-100"
 
@@ -167,7 +212,7 @@ const Login = () => {
 
                             </form>
 
-                            <div className="mt-3 text-center">
+                            <div className="text-center mt-3">
 
                                 <Link to="/forgot-password">
 
@@ -179,9 +224,15 @@ const Login = () => {
 
                             <div className="text-center mt-2">
 
+                                <span>
+
+                                    Chưa có tài khoản?{" "}
+
+                                </span>
+
                                 <Link to="/register">
 
-                                    Chưa có tài khoản?
+                                    Đăng ký
 
                                 </Link>
 

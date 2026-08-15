@@ -1,171 +1,124 @@
 import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema(
-
     {
-
         title: {
-
             type: String,
-
-            required: true,
-
+            required: [true, "Tên công việc là bắt buộc."],
             trim: true,
-
             maxlength: 200
-
         },
 
         description: {
-
             type: String,
-
+            trim: true,
             default: ""
-
         },
 
         project: {
-
             type: mongoose.Schema.Types.ObjectId,
-
             ref: "Project",
-
-            required: true
-
+            required: [true, "Công việc phải thuộc một dự án."],
+            index: true
         },
 
         creator: {
-
             type: mongoose.Schema.Types.ObjectId,
-
             ref: "User",
-
-            required: true
-
+            required: true,
+            index: true
         },
 
         assignee: {
-
             type: mongoose.Schema.Types.ObjectId,
-
-            ref: "User"
-
+            ref: "User",
+            default: null
         },
 
         status: {
-
             type: String,
-
             enum: [
-
                 "Todo",
-
                 "In Progress",
-
                 "Review",
-
                 "Completed",
-
                 "Cancelled"
-
             ],
-
             default: "Todo"
-
         },
 
         priority: {
-
             type: String,
-
             enum: [
-
                 "Low",
-
                 "Medium",
-
                 "High",
-
                 "Urgent"
-
             ],
-
             default: "Medium"
-
         },
 
         progress: {
-
             type: Number,
-
             default: 0,
-
             min: 0,
-
             max: 100
-
         },
 
         startDate: {
-
-            type: Date
-
+            type: Date,
+            default: null
         },
 
         dueDate: {
-
-            type: Date
-
+            type: Date,
+            default: null
         },
 
         completedAt: {
-
-            type: Date
-
+            type: Date,
+            default: null
         },
 
         tags: [
-
             {
-
-                type: String
-
+                type: String,
+                trim: true
             }
-
         ],
 
         attachments: [
-
             {
-
-                type: String
-
+                type: String,
+                trim: true
             }
-
         ],
 
         isDeleted: {
-
             type: Boolean,
-
-            default: false
-
+            default: false,
+            index: true
         }
-
     },
-
     {
-
-        timestamps: true
-
+        timestamps: true,
+        versionKey: false
     }
-
 );
 
-export default mongoose.model(
+taskSchema.index({
+    project: 1,
+    isDeleted: 1
+});
 
-    "Task",
+taskSchema.index({
+    creator: 1,
+    isDeleted: 1
+});
 
-    taskSchema
+taskSchema.index({
+    dueDate: 1,
+    isDeleted: 1
+});
 
-);
+export default mongoose.model("Task", taskSchema);

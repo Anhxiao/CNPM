@@ -1,48 +1,41 @@
 import { useEffect, useState } from "react";
-
 import notificationService from "../../services/notification.service";
-
 import Loading from "../../components/common/Loading";
 
 const Notification = () => {
 
     const [loading, setLoading] = useState(true);
-
     const [notifications, setNotifications] = useState([]);
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
-
         loadNotifications();
-
     }, []);
 
     const loadNotifications = async () => {
 
         try {
 
+            setLoading(true);
+
             const response = await notificationService.getNotifications();
 
+            const data = response.data.data;
+
             setNotifications(
-
-                response.data.data || []
-
+                data.notifications || data || []
             );
 
-        }
+        } catch (error) {
 
-        catch (error) {
+            console.error(error);
 
             alert(
-
                 error.response?.data?.message ||
-
-                "Không thể tải thông báo."
-
+                "Không thể tải danh sách thông báo."
             );
 
-        }
-
-        finally {
+        } finally {
 
             setLoading(false);
 
@@ -54,21 +47,24 @@ const Notification = () => {
 
         try {
 
+            setProcessing(true);
+
             await notificationService.markAsRead(id);
 
-            loadNotifications();
+            await loadNotifications();
 
-        }
+        } catch (error) {
 
-        catch (error) {
+            console.error(error);
 
             alert(
-
                 error.response?.data?.message ||
-
-                "Không thể cập nhật."
-
+                "Không thể cập nhật thông báo."
             );
+
+        } finally {
+
+            setProcessing(false);
 
         }
 
@@ -76,189 +72,142 @@ const Notification = () => {
 
     const deleteNotification = async (id) => {
 
-        if (
-
-            !window.confirm(
-
-                "Bạn có chắc muốn xóa thông báo?"
-
-            )
-
-        ) {
-
+        if (!window.confirm("Bạn có chắc muốn xóa thông báo này?")) {
             return;
-
         }
 
         try {
 
+            setProcessing(true);
+
             await notificationService.deleteNotification(id);
 
-            loadNotifications();
+            await loadNotifications();
 
-        }
+        } catch (error) {
 
-        catch (error) {
+            console.error(error);
 
             alert(
-
                 error.response?.data?.message ||
-
-                "Không thể xóa."
-
+                "Không thể xóa thông báo."
             );
+
+        } finally {
+
+            setProcessing(false);
 
         }
 
     };
 
     if (loading) {
-
         return <Loading />;
-
     }
 
     return (
 
-        <div className="container">
+        <div className="container-fluid">
 
-            <div className="card">
+            <div className="d-flex justify-content-between align-items-center mb-4">
 
-                <div className="card-header">
+                <h2>Thông báo</h2>
 
-                    <h3>
+                <button
+                    className="btn btn-primary"
+                    onClick={loadNotifications}
+                    disabled={processing}
+                >
+                    Làm mới
+                </button>
 
-                        Thông báo
+            </div>
 
-                    </h3>
+            {
+                notifications.length === 0 ? (
 
-                </div>
+                    <div className="alert alert-info">
+                        Chưa có thông báo nào.
+                    </div>
 
-                <div className="card-body">
+                ) : (
 
-                    {
+                    notifications.map(notification => (
 
-                        notifications.length === 0 && (
+                        <div
+                            key={notification._id}
+                            className={`card mb-3 ${
+                                notification.isRead
+                                    ? ""
+                                    : "border-primary"
+                            }`}
+                        >
 
-                            <div className="alert alert-info">
+                            <div className="card-body">
 
-                                Chưa có thông báo.
+                                <div className="d-flex justify-content-between">
 
-                            </div>
+                                    <div>
 
-                        )
+                                        <h5 className="mb-2">
+                                            {notification.title}
+                                        </h5>
 
-                    }
+                                        <p className="mb-2">
+                                            {notification.message}
+                                        </p>
 
-                    {
-
-                        notifications.map(item => (
-
-                            <div
-
-                                key={item._id}
-
-                                className={
-
-                                    item.isRead
-
-                                    ?
-
-                                    "card mb-3"
-
-                                    :
-
-                                    "card border-primary mb-3"
-
-                                }
-
-                            >
-
-                                <div className="card-body">
-
-                                    <div className="d-flex justify-content-between">
-
-                                        <div>
-
-                                            <h5>
-
-                                                {
-
-                                                    item.title
-
-                                                }
-
-                                            </h5>
-
-                                            <p>
-
-                                                {
-
-                                                    item.message
-
-                                                }
-
-                                            </p>
-
-                                            <small>
-
-                                                {
-
-                                                    new Date(
-
-                                                        item.createdAt
-
-                                                    ).toLocaleString()
-
-                                                }
-
-                                            </small>
-
-                                        </div>
-
-                                        <div>
+                                        <div className="text-muted small">
 
                                             {
-
-                                                !item.isRead && (
-
-                                                    <button
-
-                                                        className="btn btn-success btn-sm me-2"
-
-                                                        onClick={() =>
-
-                                                            markAsRead(item._id)
-
-                                                        }
-
-                                                    >
-
-                                                        Đã đọc
-
-                                                    </button>
-
-                                                )
-
+                                                notification.type &&
+                                                <>
+                                                    <strong>Loại:</strong>{" "}
+                                                    {notification.type}
+                                                    <br />
+                                                </>
                                             }
 
-                                            <button
-
-                                                className="btn btn-danger btn-sm"
-
-                                                onClick={() =>
-
-                                                    deleteNotification(item._id)
-
-                                                }
-
-                                            >
-
-                                                Xóa
-
-                                            </button>
+                                            <strong>Thời gian:</strong>{" "}
+                                            {
+                                                notification.createdAt
+                                                    ? new Date(
+                                                        notification.createdAt
+                                                    ).toLocaleString()
+                                                    : "-"
+                                            }
 
                                         </div>
+
+                                    </div>
+
+                                    <div className="text-end">
+
+                                        {
+                                            !notification.isRead && (
+
+                                                <button
+                                                    className="btn btn-success btn-sm me-2"
+                                                    disabled={processing}
+                                                    onClick={() =>
+                                                        markAsRead(notification._id)
+                                                    }
+                                                >
+                                                    Đánh dấu đã đọc
+                                                </button>
+
+                                            )
+                                        }
+
+                                        <button
+                                            className="btn btn-danger btn-sm"
+                                            disabled={processing}
+                                            onClick={() =>
+                                                deleteNotification(notification._id)
+                                            }
+                                        >
+                                            Xóa
+                                        </button>
 
                                     </div>
 
@@ -266,13 +215,12 @@ const Notification = () => {
 
                             </div>
 
-                        ))
+                        </div>
 
-                    }
+                    ))
 
-                </div>
-
-            </div>
+                )
+            }
 
         </div>
 

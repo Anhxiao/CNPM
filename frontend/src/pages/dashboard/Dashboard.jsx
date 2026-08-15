@@ -11,7 +11,17 @@ import NotificationList from "../../components/notifications/NotificationList";
 
 const Dashboard = () => {
 
-    const [dashboard, setDashboard] = useState(null);
+    const [dashboard, setDashboard] = useState({
+
+        totalProjects: 0,
+
+        totalTasks: 0,
+
+        completedTasks: 0,
+
+        overdueTasks: 0
+
+    });
 
     const [projects, setProjects] = useState([]);
 
@@ -22,6 +32,8 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     const loadData = async () => {
+
+        setLoading(true);
 
         try {
 
@@ -37,7 +49,7 @@ const Dashboard = () => {
 
             ] = await Promise.all([
 
-                statisticsService.getDashboard(),
+                statisticsService.getDashboardStatistics(),
 
                 projectService.getProjects(),
 
@@ -49,25 +61,35 @@ const Dashboard = () => {
 
             setDashboard(
 
-                dashboardRes.data.data
+                dashboardRes.data?.data || {
+
+                    totalProjects: 0,
+
+                    totalTasks: 0,
+
+                    completedTasks: 0,
+
+                    overdueTasks: 0
+
+                }
 
             );
 
             setProjects(
 
-                projectRes.data.data || []
+                projectRes.data?.data || []
 
             );
 
             setTasks(
 
-                taskRes.data.data || []
+                taskRes.data?.data?.tasks || []
 
             );
 
             setNotifications(
 
-                notificationRes.data.data || []
+                notificationRes.data?.data || []
 
             );
 
@@ -75,7 +97,25 @@ const Dashboard = () => {
 
         catch (error) {
 
-            console.error(error);
+            console.error("Dashboard Error:", error);
+
+            setDashboard({
+
+                totalProjects: 0,
+
+                totalTasks: 0,
+
+                completedTasks: 0,
+
+                overdueTasks: 0
+
+            });
+
+            setProjects([]);
+
+            setTasks([]);
+
+            setNotifications([]);
 
         }
 
@@ -95,17 +135,37 @@ const Dashboard = () => {
 
     const markAsRead = async (id) => {
 
-        await notificationService.markAsRead(id);
+        try {
 
-        loadData();
+            await notificationService.markAsRead(id);
+
+            loadData();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
 
     };
 
     const deleteNotification = async (id) => {
 
-        await notificationService.deleteNotification(id);
+        try {
 
-        loadData();
+            await notificationService.deleteNotification(id);
+
+            loadData();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
 
     };
 
@@ -133,7 +193,7 @@ const Dashboard = () => {
 
                         title="Tổng Project"
 
-                        value={dashboard?.totalProjects || 0}
+                        value={dashboard.totalProjects}
 
                     />
 
@@ -145,7 +205,7 @@ const Dashboard = () => {
 
                         title="Tổng Task"
 
-                        value={dashboard?.totalTasks || 0}
+                        value={dashboard.totalTasks}
 
                     />
 
@@ -157,7 +217,7 @@ const Dashboard = () => {
 
                         title="Đã hoàn thành"
 
-                        value={dashboard?.completedTasks || 0}
+                        value={dashboard.completedTasks}
 
                     />
 
@@ -169,7 +229,7 @@ const Dashboard = () => {
 
                         title="Quá hạn"
 
-                        value={dashboard?.overdueTasks || 0}
+                        value={dashboard.overdueTasks}
 
                     />
 
@@ -185,19 +245,19 @@ const Dashboard = () => {
 
                         <div className="card-header">
 
-                            Project gần đây
+                            Dự án gần đây
 
                         </div>
 
                         <div className="card-body">
 
-                            <table className="table">
+                            <table className="table table-striped">
 
                                 <thead>
 
                                     <tr>
 
-                                        <th>Tên</th>
+                                        <th>Tên dự án</th>
 
                                         <th>Tiến độ</th>
 
@@ -209,29 +269,57 @@ const Dashboard = () => {
 
                                     {
 
-                                        projects.slice(0,5).map(project=>(
+                                        projects.length === 0 ?
 
-                                            <tr key={project._id}>
+                                        (
 
-                                                <td>
+                                            <tr>
 
-                                                    {project.name}
+                                                <td
 
-                                                </td>
+                                                    colSpan="2"
 
-                                                <td>
+                                                    className="text-center"
 
-                                                    {
+                                                >
 
-                                                        project.progress || 0
-
-                                                    }%
+                                                    Chưa có dự án.
 
                                                 </td>
 
                                             </tr>
 
-                                        ))
+                                        )
+
+                                        :
+
+                                        (
+
+                                            projects
+
+                                                .slice(0, 5)
+
+                                                .map(project => (
+
+                                                    <tr key={project._id}>
+
+                                                        <td>
+
+                                                            {project.name}
+
+                                                        </td>
+
+                                                        <td>
+
+                                                            {project.progress ?? 0}%
+
+                                                        </td>
+
+                                                    </tr>
+
+                                                ))
+
+                                        )
 
                                     }
 
@@ -251,21 +339,21 @@ const Dashboard = () => {
 
                         <div className="card-header">
 
-                            Task sắp đến hạn
+                            Công việc sắp đến hạn
 
                         </div>
 
                         <div className="card-body">
 
-                            <table className="table">
+                            <table className="table table-striped">
 
                                 <thead>
 
                                     <tr>
 
-                                        <th>Tên</th>
+                                        <th>Tên công việc</th>
 
-                                        <th>Deadline</th>
+                                        <th>Hạn hoàn thành</th>
 
                                     </tr>
 
@@ -275,39 +363,77 @@ const Dashboard = () => {
 
                                     {
 
-                                        tasks
+                                        tasks.length === 0 ?
 
-                                        .slice(0,5)
+                                        (
 
-                                        .map(task=>(
+                                            <tr>
 
-                                            <tr key={task._id}>
+                                                <td
 
-                                                <td>
+                                                    colSpan="2"
 
-                                                    {task.title}
+                                                    className="text-center"
 
-                                                </td>
+                                                >
 
-                                                <td>
-
-                                                    {
-
-                                                        task.dueDate ?
-
-                                                        new Date(task.dueDate)
-
-                                                        .toLocaleDateString()
-
-                                                        : "-"
-
-                                                    }
+                                                    Chưa có công việc.
 
                                                 </td>
 
                                             </tr>
 
-                                        ))
+                                        )
+
+                                        :
+
+                                        (
+
+                                            tasks
+
+                                                .slice(0, 5)
+
+                                                .map(task => (
+
+                                                    <tr key={task._id}>
+
+                                                        <td>
+
+                                                            {task.title}
+
+                                                        </td>
+
+                                                        <td>
+
+                                                            {
+
+                                                                task.dueDate
+
+                                                                    ?
+
+                                                                    new Date(
+
+                                                                        task.dueDate
+
+                                                                    ).toLocaleDateString(
+
+                                                                        "vi-VN"
+
+                                                                    )
+
+                                                                    :
+
+                                                                    "-"
+
+                                                            }
+
+                                                        </td>
+
+                                                    </tr>
+
+                                                ))
+
+                                        )
 
                                     }
 

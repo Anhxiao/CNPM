@@ -2,9 +2,13 @@ import axios from "axios";
 
 const api = axios.create({
 
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL:
 
-    timeout: 10000,
+        import.meta.env.VITE_API_URL ||
+
+        "http://localhost:5000/api",
+
+    timeout: 15000,
 
     headers: {
 
@@ -14,15 +18,25 @@ const api = axios.create({
 
 });
 
+/**
+ * Request Interceptor
+ */
+
 api.interceptors.request.use(
 
     (config) => {
 
-        const token = localStorage.getItem("accessToken");
+        const token = localStorage.getItem(
+
+            "accessToken"
+
+        );
 
         if (token) {
 
-            config.headers.Authorization = `Bearer ${token}`;
+            config.headers.Authorization =
+
+                `Bearer ${token}`;
 
         }
 
@@ -30,13 +44,13 @@ api.interceptors.request.use(
 
     },
 
-    (error) => {
-
-        return Promise.reject(error);
-
-    }
+    (error) => Promise.reject(error)
 
 );
+
+/**
+ * Response Interceptor
+ */
 
 api.interceptors.response.use(
 
@@ -44,15 +58,23 @@ api.interceptors.response.use(
 
     (error) => {
 
-        if (error.response?.status === 401) {
+        if (
 
-            localStorage.removeItem("accessToken");
+            error.response &&
 
-            localStorage.removeItem("refreshToken");
+            error.response.status === 401
 
-            localStorage.removeItem("user");
+        ) {
 
-            window.location.href = "/login";
+            console.warn(
+
+                "Token hết hạn hoặc không hợp lệ."
+
+            );
+
+            localStorage.clear();
+
+            window.location.replace("/login");
 
         }
 

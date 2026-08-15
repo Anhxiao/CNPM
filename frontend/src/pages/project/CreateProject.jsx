@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 
 import projectService from "../../services/project.service";
@@ -9,6 +8,8 @@ const CreateProject = () => {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(false);
+
+    const [error, setError] = useState("");
 
     const [formData, setFormData] = useState({
 
@@ -24,39 +25,65 @@ const CreateProject = () => {
 
     });
 
-    const handleChange = (event) => {
+    const handleChange = (e) => {
 
         setFormData({
 
             ...formData,
 
-            [event.target.name]: event.target.value
+            [e.target.name]: e.target.value
 
         });
 
     };
 
-    const handleSubmit = async (event) => {
+    const handleSubmit = async (e) => {
 
-        event.preventDefault();
+        e.preventDefault();
 
-        setLoading(true);
+        setError("");
+
+        if (!formData.name.trim()) {
+
+            setError("Tên Project không được để trống.");
+
+            return;
+
+        }
+
+        if (
+
+            formData.startDate &&
+
+            formData.endDate &&
+
+            new Date(formData.startDate) >
+
+            new Date(formData.endDate)
+
+        ) {
+
+            setError("Ngày kết thúc phải sau ngày bắt đầu.");
+
+            return;
+
+        }
 
         try {
 
-            await projectService.createProject(formData);
+            setLoading(true);
 
-            alert("Tạo Project thành công.");
+            await projectService.createProject(formData);
 
             navigate("/projects");
 
         }
 
-        catch (error) {
+        catch (err) {
 
-            alert(
+            setError(
 
-                error.response?.data?.message ||
+                err.response?.data?.message ||
 
                 "Không thể tạo Project."
 
@@ -74,17 +101,17 @@ const CreateProject = () => {
 
     return (
 
-        <div className="container">
+        <div className="container mt-4">
 
             <div className="row justify-content-center">
 
                 <div className="col-lg-8">
 
-                    <div className="card">
+                    <div className="card shadow">
 
                         <div className="card-header">
 
-                            <h4>
+                            <h4 className="mb-0">
 
                                 Thêm Project
 
@@ -94,11 +121,23 @@ const CreateProject = () => {
 
                         <div className="card-body">
 
+                            {
+
+                                error &&
+
+                                <div className="alert alert-danger">
+
+                                    {error}
+
+                                </div>
+
+                            }
+
                             <form onSubmit={handleSubmit}>
 
                                 <div className="mb-3">
 
-                                    <label>
+                                    <label className="form-label">
 
                                         Tên Project
 
@@ -124,7 +163,7 @@ const CreateProject = () => {
 
                                 <div className="mb-3">
 
-                                    <label>
+                                    <label className="form-label">
 
                                         Mô tả
 
@@ -148,7 +187,7 @@ const CreateProject = () => {
 
                                 <div className="mb-3">
 
-                                    <label>
+                                    <label className="form-label">
 
                                         Trạng thái
 
@@ -194,7 +233,7 @@ const CreateProject = () => {
 
                                         <div className="mb-3">
 
-                                            <label>
+                                            <label className="form-label">
 
                                                 Ngày bắt đầu
 
@@ -222,7 +261,7 @@ const CreateProject = () => {
 
                                         <div className="mb-3">
 
-                                            <label>
+                                            <label className="form-label">
 
                                                 Ngày kết thúc
 
@@ -258,6 +297,8 @@ const CreateProject = () => {
 
                                         onClick={() => navigate("/projects")}
 
+                                        disabled={loading}
+
                                     >
 
                                         Hủy
@@ -278,9 +319,9 @@ const CreateProject = () => {
 
                                             loading
 
-                                            ? "Đang lưu..."
+                                                ? "Đang lưu..."
 
-                                            : "Lưu Project"
+                                                : "Lưu Project"
 
                                         }
 

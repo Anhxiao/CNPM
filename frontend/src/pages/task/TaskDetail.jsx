@@ -1,20 +1,10 @@
 import { useEffect, useState } from "react";
-
-import {
-
-    useNavigate,
-
-    useParams
-
-} from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 
 import taskService from "../../services/task.service";
-
-import projectService from "../../services/project.service";
-
 import Loading from "../../components/common/Loading";
 
-const UpdateTask = () => {
+const TaskDetail = () => {
 
     const { id } = useParams();
 
@@ -22,109 +12,15 @@ const UpdateTask = () => {
 
     const [loading, setLoading] = useState(true);
 
-    const [projects, setProjects] = useState([]);
+    const [task, setTask] = useState(null);
 
-    const [formData, setFormData] = useState({
-
-        title: "",
-
-        description: "",
-
-        projectId: "",
-
-        priority: "Medium",
-
-        status: "Pending",
-
-        startDate: "",
-
-        dueDate: ""
-
-    });
-
-    useEffect(() => {
-
-        loadData();
-
-    }, []);
-
-    const loadData = async () => {
+    const loadTask = async () => {
 
         try {
 
-            const [
+            const response = await taskService.getTask(id);
 
-                projectResponse,
-
-                taskResponse
-
-            ] = await Promise.all([
-
-                projectService.getProjects(),
-
-                taskService.getTaskById(id)
-
-            ]);
-
-            setProjects(
-
-                projectResponse.data.data || []
-
-            );
-
-            const task = taskResponse.data.data;
-
-            setFormData({
-
-                title: task.title || "",
-
-                description: task.description || "",
-
-                projectId:
-
-                    task.project?._id ||
-
-                    task.project ||
-
-                    "",
-
-                priority:
-
-                    task.priority ||
-
-                    "Medium",
-
-                status:
-
-                    task.status ||
-
-                    "Pending",
-
-                startDate:
-
-                    task.startDate
-
-                    ?
-
-                    task.startDate.substring(0, 10)
-
-                    :
-
-                    "",
-
-                dueDate:
-
-                    task.dueDate
-
-                    ?
-
-                    task.dueDate.substring(0, 10)
-
-                    :
-
-                    ""
-
-            });
+            setTask(response.data.data);
 
         }
 
@@ -134,7 +30,7 @@ const UpdateTask = () => {
 
                 error.response?.data?.message ||
 
-                "Không thể tải dữ liệu."
+                "Không thể tải Task."
 
             );
 
@@ -150,39 +46,25 @@ const UpdateTask = () => {
 
     };
 
-    const handleChange = (event) => {
+    useEffect(() => {
 
-        setFormData({
+        loadTask();
 
-            ...formData,
+    }, []);
 
-            [event.target.name]:
+    const handleDelete = async () => {
 
-                event.target.value
+        if (!window.confirm("Bạn có chắc muốn xóa Task này?")) {
 
-        });
+            return;
 
-    };
-
-    const handleSubmit = async (event) => {
-
-        event.preventDefault();
+        }
 
         try {
 
-            await taskService.updateTask(
+            await taskService.deleteTask(id);
 
-                id,
-
-                formData
-
-            );
-
-            alert(
-
-                "Cập nhật Task thành công."
-
-            );
+            alert("Xóa thành công.");
 
             navigate("/tasks");
 
@@ -194,7 +76,35 @@ const UpdateTask = () => {
 
                 error.response?.data?.message ||
 
-                "Không thể cập nhật Task."
+                "Không thể xóa."
+
+            );
+
+        }
+
+    };
+
+    const handleComplete = async () => {
+
+        try {
+
+            await taskService.updateTask(id, {
+
+                status: "Completed"
+
+            });
+
+            loadTask();
+
+        }
+
+        catch (error) {
+
+            alert(
+
+                error.response?.data?.message ||
+
+                "Không thể cập nhật."
 
             );
 
@@ -208,319 +118,312 @@ const UpdateTask = () => {
 
     }
 
+    if (!task) {
+
+        return (
+
+            <div className="container mt-5">
+
+                <div className="alert alert-danger">
+
+                    Không tìm thấy Task.
+
+                </div>
+
+            </div>
+
+        );
+
+    }
+
     return (
 
         <div className="container">
 
             <div className="card">
 
-                <div className="card-header">
+                <div className="card-header d-flex justify-content-between align-items-center">
 
                     <h3>
 
-                        Cập nhật Task
+                        Chi tiết Task
 
                     </h3>
+
+                    <div>
+
+                        <button
+                            className="btn btn-secondary me-2"
+                            onClick={() => navigate(-1)}
+                        >
+                            Quay lại
+                        </button>
+
+                        <Link
+                            to={`/tasks/edit/${task._id}`}
+                            className="btn btn-warning me-2"
+                        >
+                            Chỉnh sửa
+                        </Link>
+
+                        <button
+                            className="btn btn-danger"
+                            onClick={handleDelete}
+                        >
+                            Xóa
+                        </button>
+
+                    </div>
 
                 </div>
 
                 <div className="card-body">
 
-                    <form onSubmit={handleSubmit}>
+                    <table className="table table-bordered">
 
-                        <div className="mb-3">
+                        <tbody>
 
-                            <label className="form-label">
+                            <tr>
 
-                                Tên Task
+                                <th width="220">
 
-                            </label>
+                                    Tên Task
 
-                            <input
+                                </th>
 
-                                type="text"
+                                <td>
 
-                                name="title"
+                                    {task.title}
 
-                                className="form-control"
+                                </td>
 
-                                value={formData.title}
+                            </tr>
 
-                                onChange={handleChange}
+                            <tr>
 
-                                required
+                                <th>
 
-                            />
+                                    Mô tả
 
-                        </div>
+                                </th>
 
-                        <div className="mb-3">
+                                <td>
 
-                            <label className="form-label">
+                                    {task.description || "-"}
 
-                                Mô tả
+                                </td>
 
-                            </label>
+                            </tr>
 
-                            <textarea
+                            <tr>
 
-                                name="description"
+                                <th>
 
-                                className="form-control"
+                                    Project
 
-                                rows="4"
+                                </th>
 
-                                value={formData.description}
+                                <td>
 
-                                onChange={handleChange}
+                                    {task.project?.name || "-"}
 
-                            />
+                                </td>
 
-                        </div>
+                            </tr>
 
-                        <div className="mb-3">
+                            <tr>
 
-                            <label className="form-label">
+                                <th>
 
-                                Project
+                                    Trạng thái
 
-                            </label>
+                                </th>
 
-                            <select
+                                <td>
 
-                                name="projectId"
+                                    {task.status}
 
-                                className="form-select"
+                                </td>
 
-                                value={formData.projectId}
+                            </tr>
 
-                                onChange={handleChange}
+                            <tr>
 
-                                required
+                                <th>
 
-                            >
+                                    Ưu tiên
 
-                                <option value="">
+                                </th>
 
-                                    Chọn Project
+                                <td>
 
-                                </option>
+                                    {task.priority}
 
-                                {
+                                </td>
 
-                                    projects.map(project => (
+                            </tr>
 
-                                        <option
+                            <tr>
 
-                                            key={project._id}
+                                <th>
 
-                                            value={project._id}
+                                    Người tạo
 
-                                        >
+                                </th>
 
-                                            {project.name}
+                                <td>
 
-                                        </option>
+                                    {task.creator?.fullName || "-"}
 
-                                    ))
+                                </td>
 
-                                }
+                            </tr>
 
-                            </select>
+                            <tr>
 
-                        </div>
+                                <th>
 
-                        <div className="row">
+                                    Người được giao
 
-                            <div className="col-md-6">
+                                </th>
 
-                                <div className="mb-3">
+                                <td>
 
-                                    <label className="form-label">
+                                    {task.assignee?.fullName || "-"}
 
-                                        Mức ưu tiên
+                                </td>
 
-                                    </label>
+                            </tr>
 
-                                    <select
+                            <tr>
 
-                                        name="priority"
+                                <th>
 
-                                        className="form-select"
+                                    Ngày bắt đầu
 
-                                        value={formData.priority}
+                                </th>
 
-                                        onChange={handleChange}
+                                <td>
 
-                                    >
+                                    {
 
-                                        <option value="Low">
+                                        task.startDate
 
-                                            Low
+                                        ?
 
-                                        </option>
+                                        new Date(task.startDate)
 
-                                        <option value="Medium">
+                                            .toLocaleDateString()
 
-                                            Medium
+                                        :
 
-                                        </option>
+                                        "-"
 
-                                        <option value="High">
+                                    }
 
-                                            High
+                                </td>
 
-                                        </option>
+                            </tr>
 
-                                    </select>
+                            <tr>
 
-                                </div>
+                                <th>
 
-                            </div>
+                                    Hạn hoàn thành
 
-                            <div className="col-md-6">
+                                </th>
 
-                                <div className="mb-3">
+                                <td>
 
-                                    <label className="form-label">
+                                    {
 
-                                        Trạng thái
+                                        task.dueDate
 
-                                    </label>
+                                        ?
 
-                                    <select
+                                        new Date(task.dueDate)
 
-                                        name="status"
+                                            .toLocaleDateString()
 
-                                        className="form-select"
+                                        :
 
-                                        value={formData.status}
+                                        "-"
 
-                                        onChange={handleChange}
+                                    }
 
-                                    >
+                                </td>
 
-                                        <option value="Pending">
+                            </tr>
 
-                                            Pending
+                            <tr>
 
-                                        </option>
+                                <th>
 
-                                        <option value="In Progress">
+                                    Hoàn thành lúc
 
-                                            In Progress
+                                </th>
 
-                                        </option>
+                                <td>
 
-                                        <option value="Completed">
+                                    {
 
-                                            Completed
+                                        task.completedAt
 
-                                        </option>
+                                        ?
 
-                                    </select>
+                                        new Date(task.completedAt)
 
-                                </div>
+                                            .toLocaleString()
 
-                            </div>
+                                        :
 
-                        </div>
+                                        "-"
 
-                        <div className="row">
+                                    }
 
-                            <div className="col-md-6">
+                                </td>
 
-                                <div className="mb-3">
+                            </tr>
 
-                                    <label className="form-label">
+                            <tr>
 
-                                        Ngày bắt đầu
+                                <th>
 
-                                    </label>
+                                    Tiến độ
 
-                                    <input
+                                </th>
 
-                                        type="date"
+                                <td>
 
-                                        name="startDate"
+                                    {task.progress || 0}%
 
-                                        className="form-control"
+                                </td>
 
-                                        value={formData.startDate}
+                            </tr>
 
-                                        onChange={handleChange}
+                        </tbody>
 
-                                    />
+                    </table>
 
-                                </div>
+                    {
 
-                            </div>
-
-                            <div className="col-md-6">
-
-                                <div className="mb-3">
-
-                                    <label className="form-label">
-
-                                        Hạn hoàn thành
-
-                                    </label>
-
-                                    <input
-
-                                        type="date"
-
-                                        name="dueDate"
-
-                                        className="form-control"
-
-                                        value={formData.dueDate}
-
-                                        onChange={handleChange}
-
-                                    />
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        <div className="d-flex gap-2">
+                        task.status !== "Completed" && (
 
                             <button
-
-                                type="submit"
 
                                 className="btn btn-success"
 
-                            >
-
-                                Cập nhật
-
-                            </button>
-
-                            <button
-
-                                type="button"
-
-                                className="btn btn-secondary"
-
-                                onClick={() =>
-
-                                    navigate("/tasks")
-
-                                }
+                                onClick={handleComplete}
 
                             >
 
-                                Hủy
+                                Đánh dấu hoàn thành
 
                             </button>
 
-                        </div>
+                        )
 
-                    </form>
+                    }
 
                 </div>
 
@@ -532,4 +435,4 @@ const UpdateTask = () => {
 
 };
 
-export default UpdateTask;
+export default TaskDetail;

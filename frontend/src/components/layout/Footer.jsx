@@ -1,14 +1,36 @@
 const Footer = () => {
 
+    const currentYear = new Date().getFullYear();
+
     return (
 
         <footer className="footer">
 
-            <p>
+            <div className="footer-container">
 
-                © 2026 Project Management System
+                <div className="footer-left">
 
-            </p>
+                    <strong>
+
+                        Personal Project Management System
+
+                    </strong>
+
+                </div>
+
+                <div className="footer-center">
+
+                    © {currentYear} - All Rights Reserved
+
+                </div>
+
+                <div className="footer-right">
+
+                    Version 1.0.0
+
+                </div>
+
+            </div>
 
         </footer>
 

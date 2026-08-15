@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { Link } from "react-router-dom";
 
 import projectService from "../../services/project.service";
@@ -10,27 +9,35 @@ const ProjectList = () => {
 
     const [projects, setProjects] = useState([]);
 
+    const [filteredProjects, setFilteredProjects] = useState([]);
+
     const [loading, setLoading] = useState(true);
 
     const [keyword, setKeyword] = useState("");
 
     const loadProjects = async () => {
 
+        setLoading(true);
+
         try {
 
             const response = await projectService.getProjects();
 
-            setProjects(
+            const data = response.data?.data || [];
 
-                response.data.data || []
+            setProjects(data);
 
-            );
+            setFilteredProjects(data);
 
         }
 
         catch (error) {
 
-            console.error(error);
+            console.error("Load Projects Error:", error);
+
+            setProjects([]);
+
+            setFilteredProjects([]);
 
         }
 
@@ -48,27 +55,37 @@ const ProjectList = () => {
 
     }, []);
 
+    useEffect(() => {
+
+        const result = projects.filter(project =>
+
+            project.name
+
+                ?.toLowerCase()
+
+                .includes(keyword.toLowerCase())
+
+        );
+
+        setFilteredProjects(result);
+
+    }, [keyword, projects]);
+
     const handleDelete = async (id) => {
 
-        if (
+        const confirmDelete = window.confirm(
 
-            !window.confirm(
+            "Bạn có chắc muốn xóa Project này?"
 
-                "Bạn có chắc muốn xóa Project này?"
+        );
 
-            )
-
-        ) {
-
-            return;
-
-        }
+        if (!confirmDelete) return;
 
         try {
 
             await projectService.deleteProject(id);
 
-            loadProjects();
+            await loadProjects();
 
         }
 
@@ -76,23 +93,17 @@ const ProjectList = () => {
 
             console.error(error);
 
+            alert(
+
+                error.response?.data?.message ||
+
+                "Không thể xóa Project."
+
+            );
+
         }
 
     };
-
-    const filteredProjects = projects.filter(project =>
-
-        project.name
-
-            ?.toLowerCase()
-
-            .includes(
-
-                keyword.toLowerCase()
-
-            )
-
-    );
 
     if (loading) {
 
@@ -126,9 +137,11 @@ const ProjectList = () => {
 
             </div>
 
-            <div className="mb-3">
+            <div className="mb-4">
 
                 <input
+
+                    type="text"
 
                     className="form-control"
 
@@ -136,13 +149,9 @@ const ProjectList = () => {
 
                     value={keyword}
 
-                    onChange={(e)=>
+                    onChange={(e) =>
 
-                        setKeyword(
-
-                            e.target.value
-
-                        )
+                        setKeyword(e.target.value)
 
                     }
 
@@ -150,13 +159,13 @@ const ProjectList = () => {
 
             </div>
 
-            <div className="card">
+            <div className="card shadow-sm">
 
                 <div className="card-body">
 
-                    <table className="table table-hover">
+                    <table className="table table-hover align-middle">
 
-                        <thead>
+                        <thead className="table-light">
 
                             <tr>
 
@@ -168,7 +177,7 @@ const ProjectList = () => {
 
                                 <th>Ngày tạo</th>
 
-                                <th width="220">
+                                <th width="240">
 
                                     Thao tác
 
@@ -182,7 +191,9 @@ const ProjectList = () => {
 
                             {
 
-                                filteredProjects.length === 0 && (
+                                filteredProjects.length === 0 ?
+
+                                (
 
                                     <tr>
 
@@ -190,11 +201,11 @@ const ProjectList = () => {
 
                                             colSpan="5"
 
-                                            className="text-center"
+                                            className="text-center text-muted"
 
                                         >
 
-                                            Không có dữ liệu
+                                            Chưa có Project nào.
 
                                         </td>
 
@@ -202,111 +213,125 @@ const ProjectList = () => {
 
                                 )
 
-                            }
+                                :
 
-                            {
+                                (
 
-                                filteredProjects.map(project => (
+                                    filteredProjects.map(project => (
 
-                                    <tr
+                                        <tr
 
-                                        key={project._id}
+                                            key={project._id}
 
-                                    >
+                                        >
 
-                                        <td>
+                                            <td>
 
-                                            {project.name}
+                                                {project.name}
 
-                                        </td>
+                                            </td>
 
-                                        <td>
+                                            <td>
 
-                                            {
+                                                {
 
-                                                project.status
+                                                    project.status ||
 
-                                            }
-
-                                        </td>
-
-                                        <td>
-
-                                            {
-
-                                                project.progress || 0
-
-                                            }
-
-                                            %
-
-                                        </td>
-
-                                        <td>
-
-                                            {
-
-                                                new Date(
-
-                                                    project.createdAt
-
-                                                ).toLocaleDateString()
-
-                                            }
-
-                                        </td>
-
-                                        <td>
-
-                                            <Link
-
-                                                to={`/projects/${project._id}`}
-
-                                                className="btn btn-info btn-sm me-2"
-
-                                            >
-
-                                                Chi tiết
-
-                                            </Link>
-
-                                            <Link
-
-                                                to={`/projects/update/${project._id}`}
-
-                                                className="btn btn-warning btn-sm me-2"
-
-                                            >
-
-                                                Sửa
-
-                                            </Link>
-
-                                            <button
-
-                                                className="btn btn-danger btn-sm"
-
-                                                onClick={()=>
-
-                                                    handleDelete(
-
-                                                        project._id
-
-                                                    )
+                                                    "Đang thực hiện"
 
                                                 }
 
-                                            >
+                                            </td>
 
-                                                Xóa
+                                            <td>
 
-                                            </button>
+                                                {
 
-                                        </td>
+                                                    project.progress ?? 0
 
-                                    </tr>
+                                                }%
 
-                                ))
+                                            </td>
+
+                                            <td>
+
+                                                {
+
+                                                    project.createdAt
+
+                                                    ?
+
+                                                    new Date(
+
+                                                        project.createdAt
+
+                                                    ).toLocaleDateString(
+
+                                                        "vi-VN"
+
+                                                    )
+
+                                                    :
+
+                                                    "-"
+
+                                                }
+
+                                            </td>
+
+                                            <td>
+
+                                                <Link
+
+                                                    to={`/projects/${project._id}`}
+
+                                                    className="btn btn-info btn-sm me-2"
+
+                                                >
+
+                                                    Chi tiết
+
+                                                </Link>
+
+                                                <Link
+
+                                                    to={`/projects/edit/${project._id}`}
+
+                                                    className="btn btn-warning btn-sm me-2"
+
+                                                >
+
+                                                    Sửa
+
+                                                </Link>
+
+                                                <button
+
+                                                    className="btn btn-danger btn-sm"
+
+                                                    onClick={() =>
+
+                                                        handleDelete(
+
+                                                            project._id
+
+                                                        )
+
+                                                    }
+
+                                                >
+
+                                                    Xóa
+
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+
+                                    ))
+
+                                )
 
                             }
 

@@ -10,6 +10,7 @@ class TaskRepository {
 
         const {
             projectId,
+            projectIds,
             status,
             priority,
             assignee,
@@ -24,135 +25,249 @@ class TaskRepository {
             isDeleted: false
         };
 
-        if (projectId)
+        if (projectId) {
             query.project = projectId;
+        }
 
-        if (status)
-            query.status = status;
-
-        if (priority)
-            query.priority = priority;
-
-        if (assignee)
-            query.assignee = assignee;
-
-        if (keyword) {
-            query.title = {
-                $regex: keyword,
-                $options: "i"
+        if (
+            Array.isArray(projectIds) &&
+            projectIds.length > 0
+        ) {
+            query.project = {
+                $in: projectIds
             };
         }
 
-        const sort = {};
+        if (status) {
+            query.status = status;
+        }
 
-        sort[sortBy] = order === "asc" ? 1 : -1;
+        if (priority) {
+            query.priority = priority;
+        }
 
-        const total = await Task.countDocuments(query);
+        if (assignee) {
+            query.assignee = assignee;
+        }
 
-        const tasks = await Task.find(query)
+        if (keyword) {
+            query.$or = [
+                {
+                    title: {
+                        $regex: keyword,
+                        $options: "i"
+                    }
+                },
+                {
+                    description: {
+                        $regex: keyword,
+                        $options: "i"
+                    }
+                }
+            ];
+        }
 
-            .populate("creator", "fullName email")
+        const currentPage = Math.max(
+            Number(page) || 1,
+            1
+        );
 
-            .populate("assignee", "fullName email")
+        const currentLimit = Math.min(
+            Math.max(Number(limit) || 10, 1),
+            100
+        );
 
-            .sort(sort)
+        const skip =
+            (currentPage - 1) * currentLimit;
 
-            .skip((page - 1) * limit)
+        const allowedSortFields = [
+            "createdAt",
+            "updatedAt",
+            "title",
+            "priority",
+            "status",
+            "dueDate",
+            "startDate"
+        ];
 
-            .limit(Number(limit));
+        const validSortBy =
+            allowedSortFields.includes(sortBy)
+                ? sortBy
+                : "createdAt";
 
-        return {
-
-            total,
-
-            page,
-
-            limit,
-
-            totalPages: Math.ceil(total / limit),
-
-            tasks
-
+        const sort = {
+            [validSortBy]:
+                order === "asc" ? 1 : -1
         };
 
+        const total =
+            await Task.countDocuments(query);
+
+        const tasks =
+            await Task.find(query)
+                .populate(
+                    "creator",
+                    "fullName email avatar"
+                )
+                .populate(
+                    "assignee",
+                    "fullName email avatar"
+                )
+                .populate(
+                    "project",
+                    "name description status startDate endDate progress color owner"
+                )
+                .sort(sort)
+                .skip(skip)
+                .limit(currentLimit)
+                .lean();
+
+        return {
+            total,
+            page: currentPage,
+            limit: currentLimit,
+            totalPages: Math.ceil(
+                total / currentLimit
+            ),
+            tasks
+        };
     }
 
     async findById(id) {
 
+        return await Task.findOne({
+            _id: id,
+            isDeleted: false
+        })
+            .populate(
+                "creator",
+                "fullName email avatar"
+            )
+            .populate(
+                "assignee",
+                "fullName email avatar"
+            )
+            .populate(
+                "project",
+                "name description status startDate endDate progress color owner"
+            );
+    }
+
+    async findByIdIncludingDeleted(id) {
+
         return await Task.findById(id)
-
-            .populate("creator", "fullName email avatar")
-
-            .populate("assignee", "fullName email avatar")
-
-            .populate("project", "name");
-
+            .populate(
+                "creator",
+                "fullName email avatar"
+            )
+            .populate(
+                "assignee",
+                "fullName email avatar"
+            )
+            .populate(
+                "project",
+                "name description status startDate endDate progress color owner"
+            );
     }
 
     async update(id, data) {
 
-        return await Task.findByIdAndUpdate(
-
-            id,
-
-            data,
-
+        return await Task.findOneAndUpdate(
             {
-
+                _id: id,
+                isDeleted: false
+            },
+            data,
+            {
                 new: true,
-
                 runValidators: true
-
             }
-
-        );
-
+        )
+            .populate(
+                "creator",
+                "fullName email avatar"
+            )
+            .populate(
+                "assignee",
+                "fullName email avatar"
+            )
+            .populate(
+                "project",
+                "name description status startDate endDate progress color owner"
+            );
     }
 
     async delete(id) {
 
-        return await Task.findByIdAndUpdate(
-
-            id,
-
+        return await Task.findOneAndUpdate(
             {
-
-                isDeleted: true
-
+                _id: id,
+                isDeleted: false
             },
-
             {
-
+                isDeleted: true
+            },
+            {
                 new: true
-
             }
-
         );
-
     }
 
     async restore(id) {
 
-        return await Task.findByIdAndUpdate(
-
-            id,
-
+        return await Task.findOneAndUpdate(
             {
-
-                isDeleted: false
-
+                _id: id,
+                isDeleted: true
             },
-
             {
-
+                isDeleted: false
+            },
+            {
                 new: true
-
             }
-
         );
-
     }
 
+    async countByProject(projectId) {
+
+        return await Task.countDocuments({
+            project: projectId,
+            isDeleted: false
+        });
+    }
+
+    async countCompletedByProject(projectId) {
+
+        return await Task.countDocuments({
+            project: projectId,
+            status: "Completed",
+            isDeleted: false
+        });
+    }
+
+    async findByProject(projectId) {
+
+        return await Task.find({
+            project: projectId,
+            isDeleted: false
+        })
+            .populate(
+                "creator",
+                "fullName email avatar"
+            )
+            .populate(
+                "assignee",
+                "fullName email avatar"
+            )
+            .populate(
+                "project",
+                "name description status startDate endDate progress color owner"
+            )
+            .sort({
+                createdAt: -1
+            });
+    }
 }
 
 export default new TaskRepository();

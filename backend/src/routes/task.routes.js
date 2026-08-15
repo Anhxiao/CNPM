@@ -23,8 +23,8 @@ const router = express.Router();
  * @swagger
  * /tasks:
  *   post:
- *     summary: Tạo Task mới
- *     description: Tạo một công việc mới trong Project.
+ *     summary: Tạo công việc mới
+ *     description: Tạo một công việc thuộc một dự án của người dùng đang đăng nhập.
  *     tags:
  *       - Tasks
  *     security:
@@ -37,7 +37,7 @@ const router = express.Router();
  *             $ref: '#/components/schemas/Task'
  *     responses:
  *       201:
- *         description: Tạo Task thành công
+ *         description: Tạo công việc thành công
  *       400:
  *         description: Dữ liệu không hợp lệ
  *       401:
@@ -55,15 +55,71 @@ router.post(
  * @swagger
  * /tasks:
  *   get:
- *     summary: Lấy danh sách Task
- *     description: Trả về toàn bộ Task của người dùng.
+ *     summary: Lấy danh sách công việc
+ *     description: Lấy các công việc thuộc những dự án của người dùng đang đăng nhập.
  *     tags:
  *       - Tasks
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: projectId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Lọc công việc theo dự án
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - Todo
+ *             - In Progress
+ *             - Review
+ *             - Completed
+ *             - Cancelled
+ *         description: Lọc theo trạng thái
+ *       - in: query
+ *         name: priority
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - Low
+ *             - Medium
+ *             - High
+ *             - Urgent
+ *         description: Lọc theo mức độ ưu tiên
+ *       - in: query
+ *         name: assignee
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Lọc theo người được giao
+ *       - in: query
+ *         name: keyword
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm theo tên công việc
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 10
  *     responses:
  *       200:
- *         description: Danh sách Task
+ *         description: Lấy danh sách công việc thành công
  *       401:
  *         description: Chưa đăng nhập
  */
@@ -77,8 +133,8 @@ router.get(
  * @swagger
  * /tasks/{id}:
  *   get:
- *     summary: Lấy chi tiết Task
- *     description: Trả về thông tin chi tiết của Task.
+ *     summary: Lấy chi tiết công việc
+ *     description: Lấy thông tin một công việc thuộc dự án của người dùng.
  *     tags:
  *       - Tasks
  *     security:
@@ -87,16 +143,16 @@ router.get(
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID của Task
  *         schema:
  *           type: string
+ *         description: ID của công việc
  *     responses:
  *       200:
- *         description: Thành công
- *       404:
- *         description: Không tìm thấy Task
+ *         description: Lấy thông tin công việc thành công
  *       401:
  *         description: Chưa đăng nhập
+ *       404:
+ *         description: Không tìm thấy công việc
  */
 router.get(
     "/:id",
@@ -108,8 +164,8 @@ router.get(
  * @swagger
  * /tasks/{id}:
  *   put:
- *     summary: Cập nhật Task
- *     description: Chỉnh sửa thông tin Task.
+ *     summary: Cập nhật công việc
+ *     description: Cập nhật thông tin công việc thuộc dự án của người dùng.
  *     tags:
  *       - Tasks
  *     security:
@@ -120,6 +176,7 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID của công việc
  *     requestBody:
  *       required: true
  *       content:
@@ -128,11 +185,13 @@ router.get(
  *             $ref: '#/components/schemas/Task'
  *     responses:
  *       200:
- *         description: Cập nhật thành công
+ *         description: Cập nhật công việc thành công
  *       400:
  *         description: Dữ liệu không hợp lệ
+ *       401:
+ *         description: Chưa đăng nhập
  *       404:
- *         description: Không tìm thấy Task
+ *         description: Không tìm thấy công việc
  */
 router.put(
     "/:id",
@@ -146,8 +205,8 @@ router.put(
  * @swagger
  * /tasks/{id}:
  *   delete:
- *     summary: Xóa mềm Task
- *     description: Đánh dấu Task là đã xóa.
+ *     summary: Xóa công việc
+ *     description: Xóa mềm công việc khỏi danh sách đang hoạt động.
  *     tags:
  *       - Tasks
  *     security:
@@ -158,11 +217,16 @@ router.put(
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID của công việc
  *     responses:
  *       200:
- *         description: Xóa thành công
+ *         description: Xóa công việc thành công
+ *       400:
+ *         description: Không thể xóa công việc
+ *       401:
+ *         description: Chưa đăng nhập
  *       404:
- *         description: Không tìm thấy Task
+ *         description: Không tìm thấy công việc
  */
 router.delete(
     "/:id",
@@ -174,8 +238,8 @@ router.delete(
  * @swagger
  * /tasks/{id}/restore:
  *   patch:
- *     summary: Khôi phục Task
- *     description: Khôi phục Task đã bị xóa mềm.
+ *     summary: Khôi phục công việc
+ *     description: Khôi phục công việc đã bị xóa mềm.
  *     tags:
  *       - Tasks
  *     security:
@@ -186,11 +250,16 @@ router.delete(
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID của công việc
  *     responses:
  *       200:
- *         description: Khôi phục thành công
+ *         description: Khôi phục công việc thành công
+ *       400:
+ *         description: Không thể khôi phục công việc
+ *       401:
+ *         description: Chưa đăng nhập
  *       404:
- *         description: Không tìm thấy Task
+ *         description: Không tìm thấy công việc
  */
 router.patch(
     "/:id/restore",

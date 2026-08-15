@@ -1,58 +1,185 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
+import projectLogo from "../../assets/images/project-logo.png";
+import avatarDefault from "../../assets/images/avatar.png";
 
 const Sidebar = () => {
+
+    const navigate = useNavigate();
+
+    const { user, logout } = useAuthContext();
+
+    const handleLogout = () => {
+
+        logout();
+
+        navigate("/login", {
+            replace: true
+        });
+
+    };
 
     return (
 
         <aside className="sidebar">
 
-            <NavLink to="/dashboard">
+            <div className="sidebar-logo">
 
-                Dashboard
+                <img
+                    src={
+                        user?.avatar
+                            ? user.avatar
+                            : "/default-avatar.png"
+                    }
+                    alt="Avatar"
+                    className="user-avatar"
+                />
 
-            </NavLink>
+                <h3>
 
-            <NavLink to="/projects">
+                    Project Management
 
-                Projects
+                </h3>
 
-            </NavLink>
+                <p>
 
-            <NavLink to="/tasks">
+                    {
 
-                Tasks
+                        user?.fullName ||
 
-            </NavLink>
+                        "Người dùng"
 
-            <NavLink to="/calendar">
+                    }
 
-                Calendar
+                </p>
 
-            </NavLink>
+            </div>
 
-            <NavLink to="/notifications">
+            <nav className="sidebar-menu">
 
-                Notifications
+                <ul>
 
-            </NavLink>
+                    <li>
 
-            <NavLink to="/statistics">
+                        <NavLink to="/dashboard">
 
-                Statistics
+                            Dashboard
 
-            </NavLink>
+                        </NavLink>
 
-            <NavLink to="/profile">
+                    </li>
 
-                Profile
+                    <li>
 
-            </NavLink>
+                        <NavLink to="/projects">
 
-            <NavLink to="/settings">
+                            Danh sách dự án
 
-                Settings
+                        </NavLink>
 
-            </NavLink>
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/projects/create">
+
+                            Thêm dự án
+
+                        </NavLink>
+
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/tasks">
+
+                            Danh sách công việc
+
+                        </NavLink>
+
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/tasks/create">
+
+                            Thêm công việc
+
+                        </NavLink>
+
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/calendar">
+
+                            Lịch
+
+                        </NavLink>
+
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/statistics">
+
+                            Thống kê
+
+                        </NavLink>
+
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/notifications">
+
+                            Thông báo
+
+                        </NavLink>
+
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/profile">
+
+                            Hồ sơ
+
+                        </NavLink>
+
+                    </li>
+
+                    <li>
+
+                        <NavLink to="/settings">
+
+                            Cài đặt
+
+                        </NavLink>
+
+                    </li>
+
+                </ul>
+
+            </nav>
+
+            <div className="sidebar-footer">
+
+                <button
+
+                    type="button"
+
+                    className="btn btn-danger"
+
+                    onClick={handleLogout}
+
+                >
+
+                    Đăng xuất
+
+                </button>
+
+            </div>
 
         </aside>
 

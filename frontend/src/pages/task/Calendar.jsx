@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import calendarService from "../../services/calendar.service";
+import taskService from "../../services/task.service";
 
 import Loading from "../../components/common/Loading";
 
@@ -12,21 +12,27 @@ const Calendar = () => {
 
     useEffect(() => {
 
-        loadCalendar();
+        loadTasks();
 
     }, []);
 
-    const loadCalendar = async () => {
+    const loadTasks = async () => {
 
         try {
 
-            const response = await calendarService.getCalendar();
+            const response = await taskService.getTasks();
 
-            setTasks(response.data.data || []);
+            setTasks(
+
+                response.data.data.tasks || []
+
+            );
 
         }
 
         catch (error) {
+
+            console.error(error);
 
             alert(
 
@@ -46,7 +52,7 @@ const Calendar = () => {
 
     };
 
-    const getBadgeColor = (priority) => {
+    const badgeColor = (priority) => {
 
         switch (priority) {
 
@@ -78,17 +84,13 @@ const Calendar = () => {
 
     return (
 
-        <div className="container">
+        <div className="container-fluid">
 
             <div className="card">
 
                 <div className="card-header">
 
-                    <h3>
-
-                        Lịch công việc
-
-                    </h3>
+                    <h3>Lịch công việc</h3>
 
                 </div>
 
@@ -96,15 +98,13 @@ const Calendar = () => {
 
                     {
 
-                        tasks.length === 0 && (
+                        tasks.length === 0 &&
 
-                            <div className="alert alert-info">
+                        <div className="alert alert-info">
 
-                                Không có công việc nào.
+                            Chưa có công việc.
 
-                            </div>
-
-                        )
+                        </div>
 
                     }
 
@@ -114,9 +114,9 @@ const Calendar = () => {
 
                             <div
 
-                                key={task._id}
-
                                 className="card mb-3"
+
+                                key={task._id}
 
                             >
 
@@ -132,7 +132,7 @@ const Calendar = () => {
 
                                         <span
 
-                                            className={`badge bg-${getBadgeColor(task.priority)}`}
+                                            className={`badge bg-${badgeColor(task.priority)}`}
 
                                         >
 
@@ -148,7 +148,7 @@ const Calendar = () => {
 
                                             task.description ||
 
-                                            "Không có mô tả."
+                                            "Không có mô tả"
 
                                         }
 
@@ -156,13 +156,9 @@ const Calendar = () => {
 
                                     <div className="row">
 
-                                        <div className="col-md-4">
+                                        <div className="col-md-3">
 
-                                            <strong>
-
-                                                Project
-
-                                            </strong>
+                                            <strong>Project</strong>
 
                                             <br />
 
@@ -178,11 +174,7 @@ const Calendar = () => {
 
                                         <div className="col-md-3">
 
-                                            <strong>
-
-                                                Bắt đầu
-
-                                            </strong>
+                                            <strong>Bắt đầu</strong>
 
                                             <br />
 
@@ -208,11 +200,7 @@ const Calendar = () => {
 
                                         <div className="col-md-3">
 
-                                            <strong>
-
-                                                Hạn
-
-                                            </strong>
+                                            <strong>Hạn</strong>
 
                                             <br />
 
@@ -236,13 +224,9 @@ const Calendar = () => {
 
                                         </div>
 
-                                        <div className="col-md-2">
+                                        <div className="col-md-3">
 
-                                            <strong>
-
-                                                Trạng thái
-
-                                            </strong>
+                                            <strong>Trạng thái</strong>
 
                                             <br />
 

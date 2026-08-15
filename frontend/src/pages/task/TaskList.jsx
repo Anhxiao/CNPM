@@ -1,21 +1,16 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import taskService from "../../services/task.service";
-
 import Loading from "../../components/common/Loading";
 
 const TaskList = () => {
 
     const [tasks, setTasks] = useState([]);
-
     const [loading, setLoading] = useState(true);
 
     const [keyword, setKeyword] = useState("");
-
     const [status, setStatus] = useState("");
-
     const [priority, setPriority] = useState("");
 
     useEffect(() => {
@@ -28,19 +23,29 @@ const TaskList = () => {
 
         try {
 
+            setLoading(true);
+
             const response = await taskService.getTasks();
 
-            setTasks(response.data.data || []);
+            console.log(response.data);
+
+            setTasks(
+
+                response.data.data.tasks || []
+
+            );
 
         }
 
         catch (error) {
 
+            console.error(error);
+
             alert(
 
                 error.response?.data?.message ||
 
-                "Không thể tải danh sách Task."
+                "Không thể tải danh sách công việc."
 
             );
 
@@ -56,7 +61,15 @@ const TaskList = () => {
 
     const deleteTask = async (id) => {
 
-        if (!window.confirm("Bạn có chắc muốn xóa Task?")) {
+        if (
+
+            !window.confirm(
+
+                "Bạn có chắc muốn xóa công việc này?"
+
+            )
+
+        ) {
 
             return;
 
@@ -66,17 +79,19 @@ const TaskList = () => {
 
             await taskService.deleteTask(id);
 
-            loadTasks();
+            await loadTasks();
 
         }
 
         catch (error) {
 
+            console.error(error);
+
             alert(
 
                 error.response?.data?.message ||
 
-                "Không thể xóa Task."
+                "Không thể xóa công việc."
 
             );
 
@@ -84,47 +99,61 @@ const TaskList = () => {
 
     };
 
-    const filteredTasks = tasks.filter(task => {
+    const filteredTasks = useMemo(() => {
 
-        const matchKeyword =
+        return tasks.filter(task => {
 
-            task.title
+            const matchKeyword =
 
-                ?.toLowerCase()
+                task.title
 
-                .includes(keyword.toLowerCase());
+                    ?.toLowerCase()
 
-        const matchStatus =
+                    .includes(
 
-            status === ""
+                        keyword.toLowerCase()
 
-            ||
+                    );
 
-            task.status === status;
+            const matchStatus =
 
-        const matchPriority =
+                status === ""
 
-            priority === ""
+                ||
 
-            ||
+                task.status === status;
 
-            task.priority === priority;
+            const matchPriority =
 
-        return (
+                priority === ""
 
-            matchKeyword
+                ||
 
-            &&
+                task.priority === priority;
 
-            matchStatus
+            return (
 
-            &&
+                matchKeyword &&
 
-            matchPriority
+                matchStatus &&
 
-        );
+                matchPriority
 
-    });
+            );
+
+        });
+
+    }, [
+
+        tasks,
+
+        keyword,
+
+        status,
+
+        priority
+
+    ]);
 
     if (loading) {
 
@@ -136,7 +165,7 @@ const TaskList = () => {
 
         <div className="container-fluid">
 
-            <div className="d-flex justify-content-between mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-4">
 
                 <h2>
 
@@ -168,19 +197,17 @@ const TaskList = () => {
 
                             <input
 
-                                type="text"
-
                                 className="form-control"
 
-                                placeholder="Tìm Task"
+                                placeholder="Tìm kiếm Task..."
 
                                 value={keyword}
 
-                                onChange={(event) =>
+                                onChange={(e) =>
 
                                     setKeyword(
 
-                                        event.target.value
+                                        e.target.value
 
                                     )
 
@@ -198,11 +225,11 @@ const TaskList = () => {
 
                                 value={status}
 
-                                onChange={(event) =>
+                                onChange={(e) =>
 
                                     setStatus(
 
-                                        event.target.value
+                                        e.target.value
 
                                     )
 
@@ -216,9 +243,9 @@ const TaskList = () => {
 
                                 </option>
 
-                                <option value="Pending">
+                                <option value="Todo">
 
-                                    Pending
+                                    Todo
 
                                 </option>
 
@@ -228,9 +255,21 @@ const TaskList = () => {
 
                                 </option>
 
+                                <option value="Review">
+
+                                    Review
+
+                                </option>
+
                                 <option value="Completed">
 
                                     Completed
+
+                                </option>
+
+                                <option value="Cancelled">
+
+                                    Cancelled
 
                                 </option>
 
@@ -246,11 +285,11 @@ const TaskList = () => {
 
                                 value={priority}
 
-                                onChange={(event) =>
+                                onChange={(e) =>
 
                                     setPriority(
 
-                                        event.target.value
+                                        e.target.value
 
                                     )
 
@@ -302,37 +341,17 @@ const TaskList = () => {
 
                             <tr>
 
-                                <th>
+                                <th>Tên Task</th>
 
-                                    Tên Task
+                                <th>Project</th>
 
-                                </th>
+                                <th>Ưu tiên</th>
 
-                                <th>
+                                <th>Trạng thái</th>
 
-                                    Project
+                                <th>Deadline</th>
 
-                                </th>
-
-                                <th>
-
-                                    Ưu tiên
-
-                                </th>
-
-                                <th>
-
-                                    Trạng thái
-
-                                </th>
-
-                                <th>
-
-                                    Hạn
-
-                                </th>
-
-                                <th>
+                                <th width="220">
 
                                     Thao tác
 
@@ -346,9 +365,7 @@ const TaskList = () => {
 
                             {
 
-                                filteredTasks.length === 0 &&
-
-                                (
+                                filteredTasks.length === 0 && (
 
                                     <tr>
 
@@ -356,11 +373,11 @@ const TaskList = () => {
 
                                             colSpan="6"
 
-                                            className="text-center"
+                                            className="text-center text-muted"
 
                                         >
 
-                                            Không có dữ liệu.
+                                            Không có công việc nào.
 
                                         </td>
 
@@ -390,9 +407,11 @@ const TaskList = () => {
 
                                             {
 
-                                                task.project?.name ||
+                                                task.project
 
-                                                "-"
+                                                    ? task.project.name
+
+                                                    : "-"
 
                                             }
 
@@ -416,17 +435,21 @@ const TaskList = () => {
 
                                                 task.dueDate
 
-                                                ?
+                                                    ?
 
-                                                new Date(
+                                                    new Date(
 
-                                                    task.dueDate
+                                                        task.dueDate
 
-                                                ).toLocaleDateString()
+                                                    ).toLocaleDateString(
 
-                                                :
+                                                        "vi-VN"
 
-                                                "-"
+                                                    )
+
+                                                    :
+
+                                                    "-"
 
                                             }
 
@@ -442,13 +465,13 @@ const TaskList = () => {
 
                                             >
 
-                                                Xem
+                                                Chi tiết
 
                                             </Link>
 
                                             <Link
 
-                                                to={`/tasks/update/${task._id}`}
+                                                to={`/tasks/edit/${task._id}`}
 
                                                 className="btn btn-warning btn-sm me-2"
 

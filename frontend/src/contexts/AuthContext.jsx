@@ -1,6 +1,12 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useMemo,
+    useState
+} from "react";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
 
@@ -10,19 +16,58 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
 
-        const storedUser = localStorage.getItem("user");
+        try {
 
-        if (storedUser) {
+            const storedUser = localStorage.getItem("user");
 
-            setUser(JSON.parse(storedUser));
+            const accessToken = localStorage.getItem("accessToken");
+
+            if (storedUser && accessToken) {
+
+                setUser(JSON.parse(storedUser));
+
+            }
 
         }
 
-        setLoading(false);
+        catch (error) {
+
+            console.error("Lỗi đọc dữ liệu đăng nhập:", error);
+
+            localStorage.removeItem("user");
+
+            localStorage.removeItem("accessToken");
+
+            localStorage.removeItem("refreshToken");
+
+        }
+
+        finally {
+
+            setLoading(false);
+
+        }
 
     }, []);
 
-    const login = (userData) => {
+    /**
+     * Đăng nhập
+     */
+    const login = (
+
+        userData,
+
+        accessToken,
+
+        refreshToken = ""
+
+    ) => {
+
+        if (!userData || !accessToken) {
+
+            return;
+
+        }
 
         localStorage.setItem(
 
@@ -32,41 +77,66 @@ export const AuthProvider = ({ children }) => {
 
         );
 
+        localStorage.setItem(
+
+            "accessToken",
+
+            accessToken
+
+        );
+
+        if (refreshToken) {
+
+            localStorage.setItem(
+
+                "refreshToken",
+
+                refreshToken
+
+            );
+
+        }
+
         setUser(userData);
 
     };
 
+    /**
+     * Đăng xuất
+     */
     const logout = () => {
 
-        localStorage.removeItem("user");
-
-        localStorage.removeItem("accessToken");
-
-        localStorage.removeItem("refreshToken");
+        localStorage.clear();
 
         setUser(null);
 
     };
 
+    const value = useMemo(() => ({
+
+        user,
+
+        setUser,
+
+        loading,
+
+        login,
+
+        logout,
+
+        isAuthenticated: Boolean(user)
+
+    }), [
+
+        user,
+
+        loading
+
+    ]);
+
     return (
 
-        <AuthContext.Provider
-
-            value={{
-
-                user,
-
-                loading,
-
-                login,
-
-                logout,
-
-                isAuthenticated: !!user
-
-            }}
-
-        >
+        <AuthContext.Provider value={value}>
 
             {children}
 
@@ -78,7 +148,19 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuthContext = () => {
 
-    return useContext(AuthContext);
+    const context = useContext(AuthContext);
+
+    if (!context) {
+
+        throw new Error(
+
+            "useAuthContext phải được dùng bên trong AuthProvider."
+
+        );
+
+    }
+
+    return context;
 
 };
 

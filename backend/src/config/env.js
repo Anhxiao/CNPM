@@ -14,7 +14,9 @@ export const env = {
 
     jwtSecret: process.env.JWT_SECRET,
 
-    jwtExpires: process.env.JWT_EXPIRES || "7d",
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || "1d",
+
+    refreshTokenExpires: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
 
     emailUser: process.env.EMAIL_USER,
 

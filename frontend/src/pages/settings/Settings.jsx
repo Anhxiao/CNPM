@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
-import userService from "../../services/user.service";
-
+import authService from "../../services/auth.service";
 import Loading from "../../components/common/Loading";
 
 const Settings = () => {
 
     const [loading, setLoading] = useState(true);
+
+    const [saving, setSaving] = useState(false);
 
     const [formData, setFormData] = useState({
 
@@ -15,16 +17,6 @@ const Settings = () => {
         phone: "",
 
         email: ""
-
-    });
-
-    const [password, setPassword] = useState({
-
-        currentPassword: "",
-
-        newPassword: "",
-
-        confirmPassword: ""
 
     });
 
@@ -38,15 +30,17 @@ const Settings = () => {
 
         try {
 
-            const response = await userService.getProfile();
+            const response = await authService.getProfile();
+
+            const user = response.data.data;
 
             setFormData({
 
-                fullName: response.data.data.fullName || "",
+                fullName: user.fullName || "",
 
-                phone: response.data.data.phone || "",
+                phone: user.phone || "",
 
-                email: response.data.data.email || ""
+                email: user.email || ""
 
             });
 
@@ -54,7 +48,7 @@ const Settings = () => {
 
         catch (error) {
 
-            alert(
+            toast.error(
 
                 error.response?.data?.message ||
 
@@ -72,101 +66,55 @@ const Settings = () => {
 
     };
 
-    const handleChange = (e) => {
+    const handleChange = (event) => {
 
         setFormData({
 
             ...formData,
 
-            [e.target.name]: e.target.value
+            [event.target.name]: event.target.value
 
         });
 
     };
 
-    const handlePasswordChange = (e) => {
+    const handleSubmit = async (event) => {
 
-        setPassword({
-
-            ...password,
-
-            [e.target.name]: e.target.value
-
-        });
-
-    };
-
-    const updateProfile = async (e) => {
-
-        e.preventDefault();
+        event.preventDefault();
 
         try {
 
-            await userService.updateProfile(formData);
+            setSaving(true);
 
-            alert("Cập nhật thông tin thành công.");
+            await authService.updateProfile({
 
-        }
+                fullName: formData.fullName,
 
-        catch (error) {
-
-            alert(
-
-                error.response?.data?.message ||
-
-                "Cập nhật thất bại."
-
-            );
-
-        }
-
-    };
-
-    const changePassword = async (e) => {
-
-        e.preventDefault();
-
-        if (
-
-            password.newPassword !==
-
-            password.confirmPassword
-
-        ) {
-
-            alert("Xác nhận mật khẩu không khớp.");
-
-            return;
-
-        }
-
-        try {
-
-            await userService.changePassword(password);
-
-            alert("Đổi mật khẩu thành công.");
-
-            setPassword({
-
-                currentPassword: "",
-
-                newPassword: "",
-
-                confirmPassword: ""
+                phone: formData.phone
 
             });
 
+            toast.success("Cập nhật thành công.");
+
+            loadProfile();
+
         }
 
         catch (error) {
 
-            alert(
+            toast.error(
 
                 error.response?.data?.message ||
 
-                "Đổi mật khẩu thất bại."
+                "Không thể cập nhật."
 
             );
+
+        }
+
+        finally {
+
+            setSaving(false);
 
         }
 
@@ -180,211 +128,127 @@ const Settings = () => {
 
     return (
 
-        <div className="container mt-4">
+        <div className="container">
 
-            <h2 className="mb-4">
+            <div className="card">
 
-                Cài đặt tài khoản
+                <div className="card-header">
 
-            </h2>
-
-            <div className="row">
-
-                <div className="col-md-6">
-
-                    <div className="card shadow-sm mb-4">
-
-                        <div className="card-header">
-
-                            Thông tin cá nhân
-
-                        </div>
-
-                        <div className="card-body">
-
-                            <form onSubmit={updateProfile}>
-
-                                <div className="mb-3">
-
-                                    <label>
-
-                                        Họ tên
-
-                                    </label>
-
-                                    <input
-
-                                        className="form-control"
-
-                                        name="fullName"
-
-                                        value={formData.fullName}
-
-                                        onChange={handleChange}
-
-                                    />
-
-                                </div>
-
-                                <div className="mb-3">
-
-                                    <label>
-
-                                        Email
-
-                                    </label>
-
-                                    <input
-
-                                        className="form-control"
-
-                                        value={formData.email}
-
-                                        disabled
-
-                                    />
-
-                                </div>
-
-                                <div className="mb-3">
-
-                                    <label>
-
-                                        Số điện thoại
-
-                                    </label>
-
-                                    <input
-
-                                        className="form-control"
-
-                                        name="phone"
-
-                                        value={formData.phone}
-
-                                        onChange={handleChange}
-
-                                    />
-
-                                </div>
-
-                                <button
-
-                                    className="btn btn-primary"
-
-                                >
-
-                                    Lưu thay đổi
-
-                                </button>
-
-                            </form>
-
-                        </div>
-
-                    </div>
+                    <h3>Cài đặt tài khoản</h3>
 
                 </div>
 
-                <div className="col-md-6">
+                <div className="card-body">
 
-                    <div className="card shadow-sm">
+                    <form onSubmit={handleSubmit}>
 
-                        <div className="card-header">
+                        <div className="mb-3">
 
-                            Đổi mật khẩu
+                            <label className="form-label">
+
+                                Họ và tên
+
+                            </label>
+
+                            <input
+
+                                className="form-control"
+
+                                name="fullName"
+
+                                value={formData.fullName}
+
+                                onChange={handleChange}
+
+                            />
+
+                        </div>
+
+                        <div className="mb-3">
+
+                            <label className="form-label">
+
+                                Email
+
+                            </label>
+
+                            <input
+
+                                className="form-control"
+
+                                value={formData.email}
+
+                                disabled
+
+                            />
 
                         </div>
 
-                        <div className="card-body">
+                        <div className="mb-3">
 
-                            <form onSubmit={changePassword}>
+                            <label className="form-label">
 
-                                <div className="mb-3">
+                                Số điện thoại
 
-                                    <label>
+                            </label>
 
-                                        Mật khẩu hiện tại
+                            <input
 
-                                    </label>
+                                className="form-control"
 
-                                    <input
+                                name="phone"
 
-                                        type="password"
+                                value={formData.phone}
 
-                                        className="form-control"
+                                onChange={handleChange}
 
-                                        name="currentPassword"
-
-                                        value={password.currentPassword}
-
-                                        onChange={handlePasswordChange}
-
-                                    />
-
-                                </div>
-
-                                <div className="mb-3">
-
-                                    <label>
-
-                                        Mật khẩu mới
-
-                                    </label>
-
-                                    <input
-
-                                        type="password"
-
-                                        className="form-control"
-
-                                        name="newPassword"
-
-                                        value={password.newPassword}
-
-                                        onChange={handlePasswordChange}
-
-                                    />
-
-                                </div>
-
-                                <div className="mb-3">
-
-                                    <label>
-
-                                        Xác nhận mật khẩu
-
-                                    </label>
-
-                                    <input
-
-                                        type="password"
-
-                                        className="form-control"
-
-                                        name="confirmPassword"
-
-                                        value={password.confirmPassword}
-
-                                        onChange={handlePasswordChange}
-
-                                    />
-
-                                </div>
-
-                                <button
-
-                                    className="btn btn-success"
-
-                                >
-
-                                    Đổi mật khẩu
-
-                                </button>
-
-                            </form>
+                            />
 
                         </div>
+
+                        <button
+
+                            className="btn btn-primary"
+
+                            disabled={saving}
+
+                        >
+
+                            {
+
+                                saving
+
+                                ?
+
+                                "Đang lưu..."
+
+                                :
+
+                                "Lưu thay đổi"
+
+                            }
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            <div className="card mt-4">
+
+                <div className="card-header">
+
+                    Đổi mật khẩu
+
+                </div>
+
+                <div className="card-body">
+
+                    <div className="alert alert-warning">
+
+                        Chức năng đổi mật khẩu sẽ được bổ sung sau khi backend hỗ trợ API.
 
                     </div>
 

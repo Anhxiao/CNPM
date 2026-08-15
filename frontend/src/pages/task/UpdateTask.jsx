@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
-
 import {
-
     useNavigate,
-
     useParams
-
 } from "react-router-dom";
 
 import taskService from "../../services/task.service";
-
 import projectService from "../../services/project.service";
 
 import Loading from "../../components/common/Loading";
@@ -22,6 +17,8 @@ const UpdateTask = () => {
 
     const [loading, setLoading] = useState(true);
 
+    const [saving, setSaving] = useState(false);
+
     const [projects, setProjects] = useState([]);
 
     const [formData, setFormData] = useState({
@@ -30,11 +27,11 @@ const UpdateTask = () => {
 
         description: "",
 
-        projectId: "",
+        project: "",
 
         priority: "Medium",
 
-        status: "Pending",
+        status: "Todo",
 
         startDate: "",
 
@@ -62,7 +59,7 @@ const UpdateTask = () => {
 
                 projectService.getProjects(),
 
-                taskService.getTaskById(id)
+                taskService.getTask(id)
 
             ]);
 
@@ -74,13 +71,15 @@ const UpdateTask = () => {
 
             const task = taskResponse.data.data;
 
+            console.log(task);
+
             setFormData({
 
                 title: task.title || "",
 
                 description: task.description || "",
 
-                projectId:
+                project:
 
                     task.project?._id ||
 
@@ -98,37 +97,31 @@ const UpdateTask = () => {
 
                     task.status ||
 
-                    "Pending",
+                    "Todo",
 
                 startDate:
 
                     task.startDate
 
-                    ?
+                        ? task.startDate.substring(0, 10)
 
-                    task.startDate.substring(0, 10)
-
-                    :
-
-                    "",
+                        : "",
 
                 dueDate:
 
                     task.dueDate
 
-                    ?
+                        ? task.dueDate.substring(0, 10)
 
-                    task.dueDate.substring(0, 10)
-
-                    :
-
-                    ""
+                        : ""
 
             });
 
         }
 
         catch (error) {
+
+            console.error(error);
 
             alert(
 
@@ -168,7 +161,29 @@ const UpdateTask = () => {
 
         event.preventDefault();
 
+        if (
+
+            formData.startDate &&
+
+            formData.dueDate &&
+
+            formData.dueDate < formData.startDate
+
+        ) {
+
+            alert(
+
+                "Hạn hoàn thành phải lớn hơn ngày bắt đầu."
+
+            );
+
+            return;
+
+        }
+
         try {
+
+            setSaving(true);
 
             await taskService.updateTask(
 
@@ -190,6 +205,8 @@ const UpdateTask = () => {
 
         catch (error) {
 
+            console.error(error);
+
             alert(
 
                 error.response?.data?.message ||
@@ -197,6 +214,12 @@ const UpdateTask = () => {
                 "Không thể cập nhật Task."
 
             );
+
+        }
+
+        finally {
+
+            setSaving(false);
 
         }
 
@@ -212,241 +235,69 @@ const UpdateTask = () => {
 
         <div className="container">
 
-            <div className="card">
+            <div className="row justify-content-center">
 
-                <div className="card-header">
+                <div className="col-lg-8">
 
-                    <h3>
+                    <div className="card">
 
-                        Cập nhật Task
+                        <div className="card-header">
 
-                    </h3>
+                            <h3>
 
-                </div>
+                                Cập nhật Task
 
-                <div className="card-body">
-
-                    <form onSubmit={handleSubmit}>
-
-                        <div className="mb-3">
-
-                            <label className="form-label">
-
-                                Tên Task
-
-                            </label>
-
-                            <input
-
-                                type="text"
-
-                                name="title"
-
-                                className="form-control"
-
-                                value={formData.title}
-
-                                onChange={handleChange}
-
-                                required
-
-                            />
+                            </h3>
 
                         </div>
 
-                        <div className="mb-3">
+                        <div className="card-body">
 
-                            <label className="form-label">
-
-                                Mô tả
-
-                            </label>
-
-                            <textarea
-
-                                name="description"
-
-                                className="form-control"
-
-                                rows="4"
-
-                                value={formData.description}
-
-                                onChange={handleChange}
-
-                            />
-
-                        </div>
-
-                        <div className="mb-3">
-
-                            <label className="form-label">
-
-                                Project
-
-                            </label>
-
-                            <select
-
-                                name="projectId"
-
-                                className="form-select"
-
-                                value={formData.projectId}
-
-                                onChange={handleChange}
-
-                                required
-
-                            >
-
-                                <option value="">
-
-                                    Chọn Project
-
-                                </option>
-
-                                {
-
-                                    projects.map(project => (
-
-                                        <option
-
-                                            key={project._id}
-
-                                            value={project._id}
-
-                                        >
-
-                                            {project.name}
-
-                                        </option>
-
-                                    ))
-
-                                }
-
-                            </select>
-
-                        </div>
-
-                        <div className="row">
-
-                            <div className="col-md-6">
+                            <form onSubmit={handleSubmit}>
 
                                 <div className="mb-3">
 
                                     <label className="form-label">
 
-                                        Mức ưu tiên
-
-                                    </label>
-
-                                    <select
-
-                                        name="priority"
-
-                                        className="form-select"
-
-                                        value={formData.priority}
-
-                                        onChange={handleChange}
-
-                                    >
-
-                                        <option value="Low">
-
-                                            Low
-
-                                        </option>
-
-                                        <option value="Medium">
-
-                                            Medium
-
-                                        </option>
-
-                                        <option value="High">
-
-                                            High
-
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            </div>
-
-                            <div className="col-md-6">
-
-                                <div className="mb-3">
-
-                                    <label className="form-label">
-
-                                        Trạng thái
-
-                                    </label>
-
-                                    <select
-
-                                        name="status"
-
-                                        className="form-select"
-
-                                        value={formData.status}
-
-                                        onChange={handleChange}
-
-                                    >
-
-                                        <option value="Pending">
-
-                                            Pending
-
-                                        </option>
-
-                                        <option value="In Progress">
-
-                                            In Progress
-
-                                        </option>
-
-                                        <option value="Completed">
-
-                                            Completed
-
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        <div className="row">
-
-                            <div className="col-md-6">
-
-                                <div className="mb-3">
-
-                                    <label className="form-label">
-
-                                        Ngày bắt đầu
+                                        Tên Task
 
                                     </label>
 
                                     <input
 
-                                        type="date"
+                                        type="text"
 
-                                        name="startDate"
+                                        name="title"
 
                                         className="form-control"
 
-                                        value={formData.startDate}
+                                        value={formData.title}
+
+                                        onChange={handleChange}
+
+                                        required
+
+                                    />
+
+                                </div>
+
+                                <div className="mb-3">
+
+                                    <label className="form-label">
+
+                                        Mô tả
+
+                                    </label>
+
+                                    <textarea
+
+                                        rows="4"
+
+                                        name="description"
+
+                                        className="form-control"
+
+                                        value={formData.description}
 
                                         onChange={handleChange}
 
@@ -454,73 +305,271 @@ const UpdateTask = () => {
 
                                 </div>
 
-                            </div>
-
-                            <div className="col-md-6">
-
                                 <div className="mb-3">
 
                                     <label className="form-label">
 
-                                        Hạn hoàn thành
+                                        Project
 
                                     </label>
 
-                                    <input
+                                    <select
 
-                                        type="date"
+                                        name="project"
 
-                                        name="dueDate"
+                                        className="form-select"
 
-                                        className="form-control"
-
-                                        value={formData.dueDate}
+                                        value={formData.project}
 
                                         onChange={handleChange}
 
-                                    />
+                                        required
+
+                                    >
+
+                                        <option value="">
+
+                                            Chọn Project
+
+                                        </option>
+
+                                        {
+
+                                            projects.map(project => (
+
+                                                <option
+
+                                                    key={project._id}
+
+                                                    value={project._id}
+
+                                                >
+
+                                                    {project.name}
+
+                                                </option>
+
+                                            ))
+
+                                        }
+
+                                    </select>
 
                                 </div>
 
-                            </div>
+                                <div className="row">
+
+                                    <div className="col-md-6">
+
+                                        <div className="mb-3">
+
+                                            <label className="form-label">
+
+                                                Mức ưu tiên
+
+                                            </label>
+
+                                            <select
+
+                                                name="priority"
+
+                                                className="form-select"
+
+                                                value={formData.priority}
+
+                                                onChange={handleChange}
+
+                                            >
+
+                                                <option value="Low">
+
+                                                    Low
+
+                                                </option>
+
+                                                <option value="Medium">
+
+                                                    Medium
+
+                                                </option>
+
+                                                <option value="High">
+
+                                                    High
+
+                                                </option>
+
+                                            </select>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="col-md-6">
+
+                                        <div className="mb-3">
+
+                                            <label className="form-label">
+
+                                                Trạng thái
+
+                                            </label>
+
+                                            <select
+
+                                                name="status"
+
+                                                className="form-select"
+
+                                                value={formData.status}
+
+                                                onChange={handleChange}
+
+                                            >
+
+                                                <option value="Todo">
+
+                                                    Todo
+
+                                                </option>
+
+                                                <option value="In Progress">
+
+                                                    In Progress
+
+                                                </option>
+
+                                                <option value="Review">
+
+                                                    Review
+
+                                                </option>
+
+                                                <option value="Completed">
+
+                                                    Completed
+
+                                                </option>
+
+                                                <option value="Cancelled">
+
+                                                    Cancelled
+
+                                                </option>
+
+                                            </select>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="row">
+
+                                    <div className="col-md-6">
+
+                                        <div className="mb-3">
+
+                                            <label className="form-label">
+
+                                                Ngày bắt đầu
+
+                                            </label>
+
+                                            <input
+
+                                                type="date"
+
+                                                name="startDate"
+
+                                                className="form-control"
+
+                                                value={formData.startDate}
+
+                                                onChange={handleChange}
+
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="col-md-6">
+
+                                        <div className="mb-3">
+
+                                            <label className="form-label">
+
+                                                Hạn hoàn thành
+
+                                            </label>
+
+                                            <input
+
+                                                type="date"
+
+                                                name="dueDate"
+
+                                                className="form-control"
+
+                                                value={formData.dueDate}
+
+                                                onChange={handleChange}
+
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="d-flex justify-content-end mt-3">
+
+                                    <button
+
+                                        type="button"
+
+                                        className="btn btn-secondary me-2"
+
+                                        onClick={() => navigate("/tasks")}
+
+                                    >
+
+                                        Hủy
+
+                                    </button>
+
+                                    <button
+
+                                        type="submit"
+
+                                        className="btn btn-primary"
+
+                                        disabled={saving}
+
+                                    >
+
+                                        {
+
+                                            saving
+
+                                                ? "Đang cập nhật..."
+
+                                                : "Cập nhật"
+
+                                        }
+
+                                    </button>
+
+                                </div>
+
+                            </form>
 
                         </div>
 
-                        <div className="d-flex gap-2">
-
-                            <button
-
-                                type="submit"
-
-                                className="btn btn-success"
-
-                            >
-
-                                Cập nhật
-
-                            </button>
-
-                            <button
-
-                                type="button"
-
-                                className="btn btn-secondary"
-
-                                onClick={() =>
-
-                                    navigate("/tasks")
-
-                                }
-
-                            >
-
-                                Hủy
-
-                            </button>
-
-                        </div>
-
-                    </form>
+                    </div>
 
                 </div>
 

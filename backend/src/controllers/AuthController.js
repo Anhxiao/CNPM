@@ -39,32 +39,40 @@ class AuthController {
      */
     async login(req, res) {
 
-        try {
+    console.log("===== LOGIN =====");
+    console.log(req.body);
 
-            const { email, password } = req.body;
+    try {
 
-            const result = await AuthService.login(
-                email,
-                password
-            );
+        const { email, password } = req.body;
 
-            return successResponse(
-                res,
-                "Đăng nhập thành công.",
-                result
-            );
+        console.log("Email:", email);
+        console.log("Password:", password);
 
-        } catch (error) {
+        const result = await AuthService.login(
+            email,
+            password
+        );
 
-            return errorResponse(
-                res,
-                error.message,
-                401
-            );
+        return successResponse(
+            res,
+            "Đăng nhập thành công.",
+            result
+        );
 
-        }
+    } catch (error) {
+
+        console.log("LOGIN ERROR:", error.message);
+
+        return errorResponse(
+            res,
+            error.message,
+            401
+        );
 
     }
+
+}
 
     /**
      * Lấy thông tin cá nhân

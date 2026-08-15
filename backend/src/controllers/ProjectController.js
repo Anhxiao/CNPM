@@ -1,4 +1,4 @@
-import ProjectService from "../services/ProjectService.js";
+import projectService from "../services/ProjectService.js";
 import {
     successResponse,
     errorResponse
@@ -10,7 +10,7 @@ class ProjectController {
 
         try {
 
-            const project = await ProjectService.createProject(
+            const project = await projectService.createProject(
                 req.user.id,
                 req.body
             );
@@ -24,10 +24,12 @@ class ProjectController {
 
         } catch (error) {
 
+            console.error("Create Project Error:", error);
+
             return errorResponse(
                 res,
-                error.message,
-                400
+                error.message || "Không thể tạo dự án.",
+                error.statusCode || 500
             );
 
         }
@@ -38,7 +40,7 @@ class ProjectController {
 
         try {
 
-            const projects = await ProjectService.getProjects(
+            const projects = await projectService.getProjects(
                 req.user.id
             );
 
@@ -50,10 +52,12 @@ class ProjectController {
 
         } catch (error) {
 
+            console.error("Get Projects Error:", error);
+
             return errorResponse(
                 res,
-                error.message,
-                500
+                error.message || "Không thể lấy danh sách dự án.",
+                error.statusCode || 500
             );
 
         }
@@ -64,7 +68,7 @@ class ProjectController {
 
         try {
 
-            const project = await ProjectService.getProjectById(
+            const project = await projectService.getProjectById(
                 req.params.id,
                 req.user.id
             );
@@ -77,10 +81,12 @@ class ProjectController {
 
         } catch (error) {
 
+            console.error("Get Project By Id Error:", error);
+
             return errorResponse(
                 res,
-                error.message,
-                404
+                error.message || "Không tìm thấy dự án.",
+                error.statusCode || 500
             );
 
         }
@@ -91,7 +97,7 @@ class ProjectController {
 
         try {
 
-            const project = await ProjectService.updateProject(
+            const project = await projectService.updateProject(
                 req.params.id,
                 req.user.id,
                 req.body
@@ -105,10 +111,12 @@ class ProjectController {
 
         } catch (error) {
 
+            console.error("Update Project Error:", error);
+
             return errorResponse(
                 res,
-                error.message,
-                400
+                error.message || "Không thể cập nhật dự án.",
+                error.statusCode || 500
             );
 
         }
@@ -119,7 +127,7 @@ class ProjectController {
 
         try {
 
-            await ProjectService.deleteProject(
+            await projectService.deleteProject(
                 req.params.id,
                 req.user.id
             );
@@ -131,10 +139,12 @@ class ProjectController {
 
         } catch (error) {
 
+            console.error("Delete Project Error:", error);
+
             return errorResponse(
                 res,
-                error.message,
-                400
+                error.message || "Không thể xóa dự án.",
+                error.statusCode || 500
             );
 
         }
@@ -145,7 +155,7 @@ class ProjectController {
 
         try {
 
-            const project = await ProjectService.restoreProject(
+            const project = await projectService.restoreProject(
                 req.params.id,
                 req.user.id
             );
@@ -158,10 +168,12 @@ class ProjectController {
 
         } catch (error) {
 
+            console.error("Restore Project Error:", error);
+
             return errorResponse(
                 res,
-                error.message,
-                400
+                error.message || "Không thể khôi phục dự án.",
+                error.statusCode || 500
             );
 
         }
