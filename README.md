@@ -446,7 +446,7 @@ Project-Management-System/
 
 <strong> Hình ảnh minh họa mô hình kiến trúc Backend của hệ thống </strong> <br>
 
-<img width="1408" height="768" alt="Gemini_Generated_Image_zdpialzdpialzdpi" src="https://github.com/user-attachments/assets/c173e571-02ec-417a-9325-6759570e75f6" /> <br>
+<img width="1024" height="559" alt="Mo_hinh_kien_truc_Frontend_Backend" src="https://github.com/user-attachments/assets/10412e0b-ab23-4c53-8f6f-a939924d97b8" />
 
 <em> <strong> Hình ảnh được tạo bằng công cụ AI GEMINI </strong> </em>
 
