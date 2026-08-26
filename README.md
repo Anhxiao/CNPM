@@ -572,5 +572,5 @@ Việc gửi email được thực hiện thông qua Gmail SMTP kết hợp thư
 
 11. Công cụ phát triển
 
-Visual Studio Code: Môi trường lập trình chính.
-GitHub CLI: Hỗ trợ thao tác với GitHub thông qua dòng lệnh.
+- Visual Studio Code: Môi trường lập trình chính.
+- GitHub CLI: Hỗ trợ thao tác với GitHub thông qua dòng lệnh.
