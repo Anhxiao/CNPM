@@ -532,3 +532,45 @@ Hệ thống hỗ trợ giao diện Responsive để sử dụng thuận tiện 
 - Gửi email nhắc việc đối với các công việc sắp đến hạn hoặc đã quá hạn.
 
 Việc gửi email được thực hiện thông qua Gmail SMTP kết hợp thư viện Nodemailer và bộ lập lịch node-cron. Đây là chức năng mở rộng, không ảnh hưởng đến các chức năng chính của hệ thống.
+
+### 1.2.8 Công nghệ sử dụng
+1. Frontend
+   
+- ReactJS: Xây dựng giao diện người dùng theo mô hình component.
+- Vite: Công cụ khởi tạo và chạy môi trường phát triển React.
+- React Router DOM: Quản lý điều hướng giữa các trang như Đăng nhập, Dashboard, Dự án và Công việc.
+- Axios: Gửi các yêu cầu HTTP từ frontend đến RESTful API.
+- Bootstrap: Hỗ trợ thiết kế giao diện responsive.
+
+3. Backend
+
+- Node.js: Môi trường thực thi JavaScript phía máy chủ.
+- Express.js: Xây dựng RESTful API.
+- Mongoose: Kết nối và thao tác với cơ sở dữ liệu MongoDB.
+- JWT (JSON Web Token): Xác thực người dùng.
+- BCrypt: Mã hóa mật khẩu người dùng.
+- Express Validator: Kiểm tra và xác thực dữ liệu đầu vào.
+- Nodemon: Tự động khởi động lại server trong quá trình phát triển.
+
+5. Cơ sở dữ liệu
+   
+- MongoDB: Cơ sở dữ liệu NoSQL sử dụng để lưu trữ thông tin người dùng, dự án và công việc.
+- MongoDB Compass: Công cụ hỗ trợ trực quan trong quá trình kiểm tra và quản lý dữ liệu MongoDB.
+
+7. API và kiểm thử
+
+- RESTful API: Kết nối giữa frontend và backend.
+- Swagger/OpenAPI: Tài liệu hóa và kiểm tra các API của hệ thống.
+- Jest: Kiểm thử các chức năng backend.
+
+9. Triển khai và quản lý mã nguồn
+   
+- Docker: Đóng gói và triển khai ứng dụng.
+- Docker Compose: Hỗ trợ quản lý nhiều dịch vụ của hệ thống.
+- Git: Quản lý phiên bản mã nguồn.
+- GitHub: Lưu trữ mã nguồn và quản lý lịch sử thay đổi.
+
+11. Công cụ phát triển
+
+Visual Studio Code: Môi trường lập trình chính.
+GitHub CLI: Hỗ trợ thao tác với GitHub thông qua dòng lệnh.
